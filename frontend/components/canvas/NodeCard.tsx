@@ -35,11 +35,11 @@ const TYPE_LABELS: Record<string, string> = {
 };
 
 const TYPE_COLORS: Record<string, string> = {
-  FILM:    '#6366F1',  // indigo
-  SHOW:    '#0EA5E9',  // sky
-  SEASON:  '#8B5CF6',  // violet
-  ARC:     '#EC4899',  // pink
-  EPISODE: '#64748B',  // slate
+  FILM:    '#4F46E5',  // indigo
+  SHOW:    '#2563EB',  // blue
+  SEASON:  '#7C3AED',  // violet
+  ARC:     '#DB2777',  // pink
+  EPISODE: '#71717A',  // zinc
 };
 
 export function NodeCard({
@@ -52,8 +52,8 @@ export function NodeCard({
   const posterH = Math.floor(h * 0.55);
   const poster = useKonvaImage(posterUrl);
   const chipDiam = scale >= 0.7 ? 20 : 14;
-  const cornerR = mediaType === 'SHOW' || mediaType === 'FILM' ? 14
-                : mediaType === 'SEASON' || mediaType === 'ARC' ? 12 : 10;
+  const cornerR = mediaType === 'SHOW' || mediaType === 'FILM' ? 12
+                : mediaType === 'SEASON' || mediaType === 'ARC' ? 10 : 9;
 
   const watchColor = watchState === 'WATCHED' ? theme['chip.watched']
                    : watchState === 'PARTIAL' ? theme['chip.partial']
@@ -111,17 +111,17 @@ export function NodeCard({
         height={h}
         fill={theme['card.bg']}
         stroke={watchState === 'WATCHED' ? theme['chip.watched'] : theme['card.border']}
-        strokeWidth={watchState === 'WATCHED' ? 2 : 1}
+        strokeWidth={watchState === 'WATCHED' ? 1.5 : 1}
         cornerRadius={cornerR}
         shadowColor={theme['card.shadow']}
-        shadowBlur={8}
+        shadowBlur={watchState === 'WATCHED' ? 12 : 7}
         shadowOffsetY={2}
       />
 
       {/* Watch state accent bar at top */}
       <Rect
         width={w}
-        height={4}
+        height={3}
         fill={watchColor}
         cornerRadius={[cornerR, cornerR, 0, 0]}
       />
@@ -132,7 +132,7 @@ export function NodeCard({
           image={poster.image}
           width={w}
           height={posterH}
-          y={4}
+          y={3}
           cornerRadius={[cornerR - 2, cornerR - 2, 0, 0]}
           listening={false}
         />
@@ -140,7 +140,7 @@ export function NodeCard({
         <Rect
           width={w}
           height={posterH}
-          y={4}
+          y={3}
           fill={theme['card.border']}
           cornerRadius={[cornerR - 2, cornerR - 2, 0, 0]}
           listening={false}
@@ -152,19 +152,19 @@ export function NodeCard({
         <>
           <Rect
             x={6}
-            y={10}
+            y={9}
             width={typeLabel.length * 6 + 10}
-            height={16}
+            height={15}
             fill={typeColor}
-            opacity={0.9}
-            cornerRadius={4}
+            opacity={0.92}
+            cornerRadius={5}
             listening={false}
           />
           <Text
             text={typeLabel}
             x={11}
-            y={14}
-            fontSize={9}
+            y={12.5}
+            fontSize={8.5}
             fontStyle="bold"
             fill="#FFFFFF"
             listening={false}

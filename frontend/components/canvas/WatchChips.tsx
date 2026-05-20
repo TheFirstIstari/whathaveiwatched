@@ -32,8 +32,8 @@ export function WatchChips({ participants, x, y, chipDiameter }: Props) {
             radius={r}
             fill={avatarColor(p.identityHex)}
             opacity={p.watched ? 1 : 0.3}
-            stroke="white"
-            strokeWidth={2}
+            stroke={p.watched ? 'rgba(255,255,255,0.92)' : 'rgba(255,255,255,0.65)'}
+            strokeWidth={1.5}
           />
           <Text
             text={p.displayName[0]?.toUpperCase() ?? '?'}
@@ -47,7 +47,7 @@ export function WatchChips({ participants, x, y, chipDiameter }: Props) {
       ))}
       {overflow > 0 && (
         <Group x={visible.length * step}>
-          <Circle radius={r} fill="#9ca3af" stroke="white" strokeWidth={2} />
+          <Circle radius={r} fill="#71717A" stroke="rgba(255,255,255,0.75)" strokeWidth={1.5} />
           <Text
             text={`+${overflow}`}
             fontSize={Math.max(5, r * 0.7)}

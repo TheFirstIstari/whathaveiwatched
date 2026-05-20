@@ -244,7 +244,7 @@ export function BoardCanvas({
     menuItems.push({ label: 'Show details', action: () => { setDrawerNodeId(nodeId); setDrawerOpen(true); } });
 
     if (isOwner && onRemoveItem) {
-      menuItems.push({ label: 'Remove from board', action: () => onRemoveItem(nodeId) });
+      menuItems.push({ label: 'Remove from board', action: () => onRemoveItem(nodeId), danger: true });
     }
 
     return menuItems;
@@ -272,7 +272,7 @@ export function BoardCanvas({
         onMouseMove={handleMouseMove}
         onMouseUp={handleMouseUp}
         onDblClick={handleDblClick}
-        style={{ cursor: 'grab', background: theme['card.bg'] }}
+        style={{ cursor: 'grab', background: theme['canvas.bg'] }}
       >
         {/* Background layer */}
         <Layer name="bg-layer" />
@@ -313,11 +313,12 @@ export function BoardCanvas({
 
         {/* UI layer — tooltip + context menu */}
         <Layer name="ui-layer">
-          <Tooltip {...tooltip} />
+          <Tooltip {...tooltip} theme={theme} />
           <ContextMenu
             {...contextMenu}
             items={buildContextItems()}
             onDismiss={() => setContextMenu(c => ({ ...c, visible: false }))}
+            theme={theme}
           />
         </Layer>
       </Stage>
