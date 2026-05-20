@@ -1,6 +1,7 @@
 'use client';
 
 import { createContext, useContext, useEffect, useState } from 'react';
+import dynamic from 'next/dynamic';
 import { SpacetimeDBProvider } from 'spacetimedb/react';
 import { DbConnection } from '@/src/module_bindings';
 import { DARK_THEME, LIGHT_THEME, ThemeTokens } from '@/lib/theme';
@@ -72,23 +73,19 @@ export function Providers({ children }: { children: React.ReactNode }) {
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
 
-  // Don't render SpacetimeProvider (or its children) during SSR — hooks like
-  // useReducer/useTable depend on SpacetimeDBProvider being present and will
-  // throw if rendered server-side. Return a bare shell (no children) until
-  // the client mounts.
-  if (!mounted) {
-    return (
-      <ThemeProvider>
-        <span style={{ display: 'none' }} suppressHydrationWarning />
-      </ThemeProvider>
-    );
-  }
-
+  // On SSR: render ThemeProvider + children without SpacetimeProvider.
+  // Pages guard themselves from calling SpacetimeDB hooks via their own
+  // mounted check, so this is safe — they return a loading skeleton.
+  // On client: wrap with SpacetimeProvider so hooks work.
   return (
-    <SpacetimeProvider>
-      <ThemeProvider>
-        {children}
-      </ThemeProvider>
-    </SpacetimeProvider>
+    <ThemeProvider>
+      {mounted ? (
+        <SpacetimeProvider>
+          {children}
+        </SpacetimeProvider>
+      ) : (
+        children
+      )}
+    </ThemeProvider>
   );
 }

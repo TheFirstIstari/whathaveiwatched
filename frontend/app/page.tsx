@@ -11,33 +11,28 @@ import { Button } from '@/components/ui/Button';
 import { ConnectionBanner } from '@/components/ui/ConnectionBanner';
 import { toast } from 'sonner';
 
-export default function DashboardPage() {
+// Inner component — only rendered after client mount, so SpacetimeDB hooks are safe
+function DashboardInner() {
   const router = useRouter();
   const [displayName, setDisplayName_] = useState('');
   const [identityHex, setIdentityHex_] = useState<string | null>(null);
-  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    setMounted(true);
     const name = getDisplayName();
     if (!name) { router.replace('/auth/signin'); return; }
     setDisplayName_(name);
     setIdentityHex_(getIdentityHex());
   }, [router]);
 
-  // Subscribe to all boards (filtered client-side to owner's boards)
   const [allBoards, boardsReady] = useTable(tables.board);
   const createBoard = useReducer(reducers.createBoard);
   const registerOwner = useReducer(reducers.registerOwner);
 
-  // Register owner once connected and identity is known
   useEffect(() => {
     if (!identityHex || !displayName) return;
-    // Call register_owner — it's idempotent (upserts on the server)
     registerOwner({ displayName, email: '', avatarUrl: '' }).catch(() => {});
   }, [identityHex, displayName]);
 
-  // Filter boards owned by this identity
   const myBoards = allBoards.filter(b =>
     identityHex && b.ownerIdentity.toHexString() === identityHex
   );
@@ -50,8 +45,6 @@ export default function DashboardPage() {
       toast.error(err?.message ?? 'Failed to create board');
     }
   };
-
-  if (!mounted) return null;
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-950">
@@ -121,4 +114,28 @@ export default function DashboardPage() {
       </footer>
     </div>
   );
+}
+
+// Outer shell — safe to render on SSR. Shows a skeleton until client mounts.
+export default function DashboardPage() {
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
+
+  if (!mounted) {
+    return (
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-950">
+        <header className="border-b bg-white dark:bg-gray-900 px-6 py-4">
+          <div className="h-7 w-40 bg-gray-200 dark:bg-gray-700 rounded animate-pulse" />
+        </header>
+        <main className="max-w-4xl mx-auto px-6 py-10">
+          <div className="h-8 w-48 bg-gray-200 dark:bg-gray-700 rounded animate-pulse mb-8" />
+          <div className="rounded-xl border border-gray-200 dark:border-gray-700 p-12 text-center">
+            <p className="text-gray-400 text-sm">Loading…</p>
+          </div>
+        </main>
+      </div>
+    );
+  }
+
+  return <DashboardInner />;
 }

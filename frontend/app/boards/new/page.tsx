@@ -11,7 +11,7 @@ import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { toast } from 'sonner';
 
-export default function NewBoardPage() {
+function NewBoardPageInner() {
   const router = useRouter();
   const [title, setTitle]           = useState('');
   const [description, setDescription] = useState('');
@@ -101,4 +101,11 @@ export default function NewBoardPage() {
       </div>
     </div>
   );
+}
+
+export default function NewBoardPage() {
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
+  if (!mounted) return <div className="min-h-screen bg-gray-50 dark:bg-gray-950 flex items-center justify-center"><p className="text-gray-400 text-sm">Loading…</p></div>;
+  return <NewBoardPageInner />;
 }

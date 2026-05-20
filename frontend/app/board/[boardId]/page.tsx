@@ -16,7 +16,7 @@ import { useTheme } from '@/app/providers';
 import { useSpacetimeDB } from 'spacetimedb/react';
 import { toast } from 'sonner';
 
-export default function BoardPage() {
+function BoardPageInner() {
   const router    = useRouter();
   const params    = useParams();
   const searchParams = useSearchParams();
@@ -234,4 +234,11 @@ export default function BoardPage() {
       </footer>
     </div>
   );
+}
+
+export default function BoardPage() {
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
+  if (!mounted) return <div className="h-screen bg-gray-50 dark:bg-gray-950 flex items-center justify-center"><p className="text-gray-400 text-sm">Loading…</p></div>;
+  return <BoardPageInner />;
 }

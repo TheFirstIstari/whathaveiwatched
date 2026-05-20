@@ -104,7 +104,14 @@ export default function BoardSettingsPage() {
     }
   };
 
-  if (!mounted) return null;
+  if (!mounted) return (
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-950">
+      <header className="border-b bg-white dark:bg-gray-900 px-6 py-4 flex items-center gap-4">
+        <div className="h-6 w-16 bg-gray-200 dark:bg-gray-700 rounded animate-pulse" />
+        <div className="h-6 w-32 bg-gray-200 dark:bg-gray-700 rounded animate-pulse" />
+      </header>
+    </div>
+  );
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-950">

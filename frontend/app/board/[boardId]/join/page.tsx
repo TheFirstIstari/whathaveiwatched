@@ -10,7 +10,7 @@ import { getParticipantState, setParticipantState, getIdentityHex, getDisplayNam
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 
-export default function JoinBoardPage() {
+function JoinBoardPageInner() {
   const router      = useRouter();
   const params      = useParams();
   const searchParams = useSearchParams();
@@ -101,4 +101,11 @@ export default function JoinBoardPage() {
       </div>
     </div>
   );
+}
+
+export default function JoinBoardPage() {
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
+  if (!mounted) return <div className="flex min-h-screen items-center justify-center bg-gray-50 dark:bg-gray-950"><p className="text-gray-400 text-sm">Loading…</p></div>;
+  return <JoinBoardPageInner />;
 }
