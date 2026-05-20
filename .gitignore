@@ -1,6 +1,7 @@
 # Private / infrastructure docs
 SPEC.md
 mempalace.yaml
+entities.json
 
 # macOS
 .DS_Store
