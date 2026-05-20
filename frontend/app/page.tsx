@@ -19,7 +19,7 @@ function DashboardInner() {
 
   useEffect(() => {
     const name = getDisplayName();
-    if (!name) { router.replace('/auth/signin'); return; }
+    if (!name) { router.replace('/signin'); return; }
     setDisplayName_(name);
     setIdentityHex_(getIdentityHex());
   }, [router]);
@@ -58,7 +58,7 @@ function DashboardInner() {
           <Button variant="ghost" size="sm" onClick={() => {
             clearIdentityToken();
             localStorage.removeItem('ihw_display_name');
-            router.replace('/auth/signin');
+            router.replace('/signin');
           }}>
             Change name
           </Button>

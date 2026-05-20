@@ -20,7 +20,7 @@ function NewBoardPageInner() {
   const [loading, setLoading]       = useState(false);
 
   useEffect(() => {
-    if (!getDisplayName()) router.replace('/auth/signin');
+    if (!getDisplayName()) router.replace('/signin');
   }, [router]);
 
   const createBoard = useReducer(reducers.createBoard);

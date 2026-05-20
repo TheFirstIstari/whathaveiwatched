@@ -28,7 +28,7 @@ export default function BoardSettingsPage() {
     setMounted(true);
     const name = getDisplayName();
     const hex  = getIdentityHex();
-    if (!name || !hex) { router.replace('/auth/signin'); return; }
+    if (!name || !hex) { router.replace('/signin'); return; }
     setIH(hex);
   }, [router]);
 
