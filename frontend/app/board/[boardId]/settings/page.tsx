@@ -11,12 +11,11 @@ import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { toast } from 'sonner';
 
-export default function BoardSettingsPage() {
+function BoardSettingsInner() {
   const router  = useRouter();
   const params  = useParams();
   const boardId = BigInt(params.boardId as string);
 
-  const [mounted, setMounted]     = useState(false);
   const [identityHex, setIH]      = useState<string | null>(null);
   const [title, setTitle]         = useState('');
   const [description, setDesc]    = useState('');
@@ -26,7 +25,6 @@ export default function BoardSettingsPage() {
   const [copied, setCopied]       = useState(false);
 
   useEffect(() => {
-    setMounted(true);
     const name = getDisplayName();
     const hex  = getIdentityHex();
     if (!name || !hex) { router.replace('/signin'); return; }
@@ -121,15 +119,6 @@ export default function BoardSettingsPage() {
       toast.error(err?.message ?? 'Failed');
     }
   };
-
-  if (!mounted) return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-950">
-      <header className="border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 px-6 py-4 flex items-center gap-4">
-        <div className="h-6 w-16 bg-gray-200 dark:bg-gray-700 rounded animate-pulse" />
-        <div className="h-6 w-32 bg-gray-200 dark:bg-gray-700 rounded animate-pulse" />
-      </header>
-    </div>
-  );
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-950">
@@ -262,4 +251,18 @@ export default function BoardSettingsPage() {
       </main>
     </div>
   );
+}
+
+export default function BoardSettingsPage() {
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
+  if (!mounted) return (
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-950">
+      <header className="border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 px-6 py-4 flex items-center gap-4">
+        <div className="h-6 w-16 bg-gray-200 dark:bg-gray-700 rounded animate-pulse" />
+        <div className="h-6 w-32 bg-gray-200 dark:bg-gray-700 rounded animate-pulse" />
+      </header>
+    </div>
+  );
+  return <BoardSettingsInner />;
 }
