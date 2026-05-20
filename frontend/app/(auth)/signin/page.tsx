@@ -52,7 +52,7 @@ export default function SignInPage() {
       <div className="w-full max-w-sm ui-card p-8 space-y-7">
         <div className="text-center space-y-2">
           <div className="inline-flex items-center gap-2 mb-1">
-            <span className="w-7 h-7 rounded-lg bg-[var(--surface)] border border-[var(--border-strong)] shadow-[2px_2px_0_var(--border-strong)] rotate-[-2deg]" aria-hidden />
+            <span className="w-7 h-7 rounded-xl bg-gradient-to-br from-indigo-500 to-sky-400 shadow-[0_10px_28px_-12px_rgba(99,102,241,0.9)]" aria-hidden />
             <span className="text-lg font-semibold tracking-tight text-[var(--text)]">IHaveWatched</span>
           </div>
           <p className="text-[var(--text-soft)] text-sm">
