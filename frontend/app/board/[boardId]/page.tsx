@@ -190,24 +190,37 @@ function BoardPageInner() {
   return (
     <div className="h-screen flex flex-col overflow-hidden" style={{ background: theme['card.bg'] }}>
       <ConnectionBanner />
-      <header className="border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 px-4 py-3 flex items-center justify-between z-10 shrink-0">
-        <div className="flex items-center gap-3 min-w-0">
-          <Button variant="ghost" size="sm" onClick={() => router.push('/')}>← Boards</Button>
-          <span className="text-gray-200 dark:text-gray-700 select-none">|</span>
-          <h1 className="font-semibold text-gray-900 dark:text-white truncate max-w-[180px]">
+      <header className="border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900
+                         px-3 sm:px-4 h-12 flex items-center justify-between gap-2 z-10 shrink-0">
+        {/* Left: back + title */}
+        <div className="flex items-center gap-1.5 sm:gap-2.5 min-w-0">
+          <Button variant="ghost" size="sm" onClick={() => router.push('/')}
+                  className="shrink-0 text-gray-500 dark:text-gray-400">
+            ← <span className="hidden sm:inline">Boards</span>
+          </Button>
+          <span className="text-gray-200 dark:text-gray-800 select-none shrink-0">|</span>
+          <h1 className="font-semibold text-sm text-gray-900 dark:text-white truncate">
             {board?.title ?? `Board ${boardId}`}
           </h1>
-          {/* Zoom level pill */}
-          <span className="hidden sm:inline-flex text-xs px-2 py-0.5 rounded-full bg-gray-100 dark:bg-gray-800 text-gray-400 dark:text-gray-500 font-mono select-none">
+          <span className="hidden md:inline-flex text-xs px-2 py-0.5 rounded-full
+                           bg-gray-100 dark:bg-gray-800 text-gray-400 dark:text-gray-500
+                           font-mono select-none shrink-0">
             {zoomLabel}
           </span>
         </div>
-        <div className="flex items-center gap-2">
-          {/* Fit to view */}
+
+        {/* Right: actions */}
+        <div className="flex items-center gap-1.5 shrink-0">
           {canvasItems.length > 0 && (
-            <Button variant="ghost" size="sm" title="Fit all to view" onClick={() => fitViewRef.current?.()}>
+            <button
+              title="Fit to view (double-click canvas)"
+              onClick={() => fitViewRef.current?.()}
+              className="w-7 h-7 flex items-center justify-center rounded-lg
+                         text-gray-400 hover:text-gray-700 dark:hover:text-gray-200
+                         hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors text-base"
+            >
               ⊡
-            </Button>
+            </button>
           )}
           {authMode === 'owner' && (
             <>
@@ -216,13 +229,16 @@ function BoardPageInner() {
                 existingTmdbIds={existingTmdbIds}
                 onImport={handleImport}
               />
-              <Button variant="ghost" size="sm" onClick={() => router.push(`/board/${boardId}/settings`)}>
-                Settings
+              <Button variant="ghost" size="sm"
+                      className="shrink-0 text-gray-500 dark:text-gray-400"
+                      onClick={() => router.push(`/board/${boardId}/settings`)}>
+                <span className="hidden sm:inline">Settings</span>
+                <span className="sm:hidden">⚙</span>
               </Button>
             </>
           )}
           {authMode === 'public' && (
-            <span className="text-xs text-gray-400 bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded">
+            <span className="text-xs text-gray-400 bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded-full">
               View only
             </span>
           )}

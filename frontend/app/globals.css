@@ -3,6 +3,72 @@
 @tailwind utilities;
 
 @layer base {
-  :root { --background: #ffffff; }
-  .dark { --background: #0f0f17; }
+  :root {
+    --background: #f9fafb;
+    color-scheme: light;
+  }
+
+  .dark {
+    --background: #0f0f17;
+    color-scheme: dark;
+  }
+
+  *,
+  *::before,
+  *::after {
+    box-sizing: border-box;
+  }
+
+  html {
+    /* Prevent layout shift from scrollbar appearing */
+    scrollbar-gutter: stable;
+  }
+
+  body {
+    background-color: var(--background);
+    /* Smooth font rendering */
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+    /* Prevent text size adjustment on orientation change */
+    -webkit-text-size-adjust: 100%;
+  }
+
+  /* Consistent focus ring */
+  :focus-visible {
+    outline: 2px solid #3b82f6;
+    outline-offset: 2px;
+  }
+
+  /* Remove default focus for mouse users */
+  :focus:not(:focus-visible) {
+    outline: none;
+  }
+
+  /* Tame default tap highlight on mobile */
+  * {
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  /* Scrollbar — thin and styled */
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: #d1d5db;
+    border-radius: 3px;
+  }
+  .dark ::-webkit-scrollbar-thumb {
+    background: #374151;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: #9ca3af;
+  }
+  .dark ::-webkit-scrollbar-thumb:hover {
+    background: #4b5563;
+  }
 }
