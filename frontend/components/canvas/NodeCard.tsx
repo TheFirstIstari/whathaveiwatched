@@ -35,11 +35,11 @@ const TYPE_LABELS: Record<string, string> = {
 };
 
 const TYPE_COLORS: Record<string, string> = {
-  FILM:    '#4F46E5',  // indigo
-  SHOW:    '#2563EB',  // blue
-  SEASON:  '#7C3AED',  // violet
-  ARC:     '#DB2777',  // pink
-  EPISODE: '#71717A',  // zinc
+  FILM:    '#6965DB',
+  SHOW:    '#228BE6',
+  SEASON:  '#9C36B5',
+  ARC:     '#E64980',
+  EPISODE: '#4B4740',
 };
 
 export function NodeCard({
@@ -63,7 +63,7 @@ export function NodeCard({
   const typeLabel = TYPE_LABELS[mediaType] ?? mediaType;
 
   const handleMouseEnter = (e: Konva.KonvaEventObject<MouseEvent>) => {
-    nodeRef.current?.to({ scaleX: 1.04, scaleY: 1.04, duration: 0.08 });
+    nodeRef.current?.to({ scaleX: 1.025, scaleY: 1.025, duration: 0.08 });
     const stage = e.target.getStage();
     if (stage) stage.container().style.cursor = 'pointer';
     const pos = e.target.getStage()?.getPointerPosition() ?? { x: 0, y: 0 };
@@ -111,17 +111,17 @@ export function NodeCard({
         height={h}
         fill={theme['card.bg']}
         stroke={watchState === 'WATCHED' ? theme['chip.watched'] : theme['card.border']}
-        strokeWidth={watchState === 'WATCHED' ? 1.5 : 1}
+        strokeWidth={watchState === 'WATCHED' ? 2 : 1.4}
         cornerRadius={cornerR}
         shadowColor={theme['card.shadow']}
-        shadowBlur={watchState === 'WATCHED' ? 12 : 7}
-        shadowOffsetY={2}
+        shadowBlur={watchState === 'WATCHED' ? 8 : 4}
+        shadowOffsetY={watchState === 'WATCHED' ? 4 : 2}
       />
 
       {/* Watch state accent bar at top */}
       <Rect
         width={w}
-        height={3}
+        height={0}
         fill={watchColor}
         cornerRadius={[cornerR, cornerR, 0, 0]}
       />
@@ -142,6 +142,7 @@ export function NodeCard({
           height={posterH}
           y={3}
           fill={theme['card.border']}
+          opacity={0.12}
           cornerRadius={[cornerR - 2, cornerR - 2, 0, 0]}
           listening={false}
         />
@@ -155,8 +156,9 @@ export function NodeCard({
             y={9}
             width={typeLabel.length * 6 + 10}
             height={15}
-            fill={typeColor}
-            opacity={0.92}
+            fill={theme['card.bg']}
+            stroke={typeColor}
+            strokeWidth={1}
             cornerRadius={5}
             listening={false}
           />
@@ -166,7 +168,7 @@ export function NodeCard({
             y={12.5}
             fontSize={8.5}
             fontStyle="bold"
-            fill="#FFFFFF"
+            fill={typeColor}
             listening={false}
           />
         </>

@@ -64,7 +64,7 @@ function DashboardInner() {
       <header className="sticky top-0 z-20 border-b border-[var(--border)] bg-[var(--bg)]/85 backdrop-blur-md">
         <div className="max-w-5xl mx-auto px-6 h-14 flex items-center justify-between">
           <div className="flex items-center gap-2.5">
-            <span className="w-6 h-6 rounded-md bg-gradient-to-br from-indigo-500 to-violet-500" aria-hidden />
+            <span className="w-6 h-6 rounded-lg bg-[var(--surface)] border border-[var(--border-strong)] shadow-[1.5px_1.5px_0_var(--border-strong)] rotate-[-2deg]" aria-hidden />
             <span className="font-semibold tracking-tight text-[var(--text)]">IHaveWatched</span>
           </div>
           <div className="flex items-center gap-1">

@@ -83,11 +83,11 @@ export function AddMediaSearch({ boardId, existingTmdbIds, onImport }: Props) {
           onFocus={() => results.length > 0 && setOpen(true)}
           onBlur={() => setTimeout(() => setOpen(false), 150)}
           placeholder="Add movie or show…"
-          className="w-44 sm:w-56 h-8 pl-8 pr-8 rounded-md text-sm
-                     bg-[var(--surface-2)] border border-[var(--border)]
+          className="w-44 sm:w-56 h-8 pl-8 pr-8 rounded-xl text-sm
+                     bg-[var(--surface)] border border-[var(--border-strong)]
                      text-[var(--text)] placeholder:text-[var(--text-dim)]
                      outline-none transition-[border-color,box-shadow,background]
-                     hover:border-[var(--border-strong)]
+                     shadow-[0_1.5px_0_var(--border-strong)]
                      focus:bg-[var(--surface)] focus:border-[var(--accent)]
                      focus:shadow-[0_0_0_3px_var(--ring)]"
         />
@@ -109,9 +109,9 @@ export function AddMediaSearch({ boardId, existingTmdbIds, onImport }: Props) {
       {open && (
         <div className="absolute right-0 top-full mt-1.5
                         w-[min(22rem,calc(100vw-1.5rem))]
-                        bg-[var(--surface)] border border-[var(--border)]
-                        rounded-lg overflow-hidden z-50
-                        shadow-[0_8px_32px_-8px_rgba(0,0,0,0.18)] dark:shadow-[0_8px_40px_-8px_rgba(0,0,0,0.6)]">
+                        bg-[var(--surface)] border border-[var(--border-strong)]
+                        rounded-2xl overflow-hidden z-50
+                        shadow-[4px_4px_0_var(--border-strong)]">
           {/* Type filter pills */}
           <div className="flex gap-1 px-2.5 pt-2.5 pb-2 border-b border-[var(--border)]">
             {(['all', 'show', 'movie'] as const).map(t => (
