@@ -83,11 +83,11 @@ export function AddMediaSearch({ boardId, existingTmdbIds, onImport }: Props) {
           onFocus={() => results.length > 0 && setOpen(true)}
           onBlur={() => setTimeout(() => setOpen(false), 150)}
           placeholder="Add movie or show…"
-          className="w-44 sm:w-56 h-8 pl-8 pr-8 rounded-2xl text-sm
+          className="w-36 sm:w-48 h-8 pl-8 pr-8 rounded-[var(--radius-full)] text-sm
                      bg-[var(--surface-solid)]/80 border border-[var(--border)]
                      text-[var(--text)] placeholder:text-[var(--text-dim)]
-                     outline-none transition-[border-color,box-shadow,background]
-                     shadow-[var(--shadow-sm)]
+                     outline-none transition-all duration-150
+                     shadow-[var(--shadow-xs)]
                      focus:bg-[var(--surface)] focus:border-[var(--accent)]
                      focus:shadow-[0_0_0_3px_var(--ring)]"
         />
@@ -96,7 +96,7 @@ export function AddMediaSearch({ boardId, existingTmdbIds, onImport }: Props) {
           : query.length > 0 && (
             <button
               onMouseDown={e => { e.preventDefault(); setQuery(''); setOpen(false); }}
-              className="absolute right-1.5 top-1/2 -translate-y-1/2 w-5 h-5 flex items-center justify-center rounded text-[var(--text-dim)] hover:text-[var(--text)] hover:bg-[var(--surface-hover)] text-xs leading-none"
+              className="absolute right-1.5 top-1/2 -translate-y-1/2 w-5 h-5 flex items-center justify-center rounded text-[var(--text-dim)] hover:text-[var(--text)] hover:bg-[var(--surface-hover)] text-xs leading-none transition-colors"
               aria-label="Clear"
             >
               ✕
@@ -110,7 +110,7 @@ export function AddMediaSearch({ boardId, existingTmdbIds, onImport }: Props) {
         <div className="absolute right-0 top-full mt-1.5
                         w-[min(22rem,calc(100vw-1.5rem))]
                         bg-[var(--surface-solid)] border border-[var(--border)]
-                        rounded-2xl overflow-hidden z-50
+                        rounded-[var(--radius-xl)] overflow-hidden z-50
                         shadow-[var(--shadow-lg)]">
           {/* Type filter pills */}
           <div className="flex gap-1 px-2.5 pt-2.5 pb-2 border-b border-[var(--border)]">
@@ -118,7 +118,7 @@ export function AddMediaSearch({ boardId, existingTmdbIds, onImport }: Props) {
               <button
                 key={t}
                 onMouseDown={e => { e.preventDefault(); setMediaType(t); }}
-                className={`px-2 py-0.5 text-[11px] font-medium rounded transition-colors
+                className={`px-2.5 py-0.5 text-[11px] font-medium rounded-[var(--radius-sm)] transition-colors
                             ${mediaType === t
                               ? 'bg-[var(--accent-soft)] text-[var(--accent)]'
                               : 'text-[var(--text-soft)] hover:bg-[var(--surface-2)]'}`}
@@ -143,7 +143,7 @@ export function AddMediaSearch({ boardId, existingTmdbIds, onImport }: Props) {
                   <li
                     key={r.id}
                     onMouseDown={() => handleSelect(r)}
-                    className={`flex items-center gap-2.5 px-2.5 py-2 mx-1 my-px rounded-md
+                    className={`flex items-center gap-2.5 px-2.5 py-2 mx-1 my-px rounded-[var(--radius-sm)]
                                 cursor-pointer transition-colors select-none
                                 ${already ? 'opacity-50 cursor-default' : ''}
                                 ${i === activeIdx

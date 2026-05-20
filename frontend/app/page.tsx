@@ -64,17 +64,21 @@ function DashboardInner() {
   return (
     <div className="min-h-screen">
       <ConnectionBanner />
-      <header className="sticky top-0 z-30 border-b border-[var(--border)] bg-[var(--surface)]/75 backdrop-blur-xl">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
+      <header className="sticky top-0 z-30 border-b border-[var(--border)] bg-[var(--surface)]/70 backdrop-blur-xl">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-14 flex items-center justify-between">
           <button onClick={() => router.push('/')} className="flex items-center gap-3 group">
-            <span className="relative w-9 h-9 rounded-2xl bg-[var(--text)] text-[var(--bg)] flex items-center justify-center shadow-[var(--shadow-md)] overflow-hidden">
+            <span className="relative w-8 h-8 rounded-[var(--radius-lg)] bg-[var(--text)] text-[var(--bg)] flex items-center justify-center shadow-[var(--shadow-sm)] overflow-hidden">
               <span className="absolute inset-0 bg-gradient-to-br from-white/20 to-transparent" />
-              <span className="relative text-sm font-black">I</span>
+              <span className="relative text-xs font-black">I</span>
             </span>
-            <span className="font-semibold tracking-tight text-[var(--text)] text-sm sm:text-base">IHaveWatched</span>
+            <span className="font-semibold tracking-tight text-[var(--text)] text-sm">IHaveWatched</span>
           </button>
-          <div className="flex items-center gap-2">
-            {displayName && <span className="hidden md:inline text-sm text-[var(--text-soft)] px-3 py-1.5 rounded-full bg-[var(--surface-2)]">{displayName}</span>}
+          <div className="flex items-center gap-1.5">
+            {displayName && (
+              <span className="hidden md:inline-flex items-center text-xs text-[var(--text-soft)] px-2.5 py-1 rounded-[var(--radius-full)] bg-[var(--surface-2)]">
+                {displayName}
+              </span>
+            )}
             <ThemeToggle />
             <Button variant="ghost" size="sm" onClick={() => {
               clearIdentityToken();
@@ -87,16 +91,19 @@ function DashboardInner() {
         </div>
       </header>
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 py-8 sm:py-12">
-        <section className="grid lg:grid-cols-[1fr_22rem] gap-6 mb-8">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-10">
+        {/* Hero Section */}
+        <section className="grid lg:grid-cols-[1fr_22rem] gap-5 mb-10">
           <div className="ui-card p-6 sm:p-8 overflow-hidden relative">
             <div className="absolute -right-24 -top-24 w-72 h-72 rounded-full bg-[var(--accent-soft)] blur-3xl" />
             <div className="relative max-w-2xl">
-              <p className="text-xs font-medium uppercase tracking-[0.18em] text-[var(--accent)] mb-3">Watchparty boards</p>
-              <h1 className="text-3xl sm:text-5xl font-semibold leading-[1.02] text-[var(--text)] mb-4">
+              <p className="text-xs font-medium uppercase tracking-[0.16em] text-[var(--accent)] mb-3">
+                Watchparty boards
+              </p>
+              <h1 className="text-3xl sm:text-4xl lg:text-5xl font-semibold leading-[1.04] text-[var(--text)] mb-4 tracking-tight">
                 Track shared watch progress without spreadsheets.
               </h1>
-              <p className="text-sm sm:text-base text-[var(--text-soft)] leading-7 max-w-xl">
+              <p className="text-sm sm:text-base text-[var(--text-soft)] leading-relaxed max-w-lg">
                 Create a board, add movies or shows, invite friends, and see exactly where everyone is in the timeline.
               </p>
               <div className="flex flex-wrap gap-3 mt-7">
@@ -113,7 +120,8 @@ function DashboardInner() {
           </div>
         </section>
 
-        <section className="space-y-8">
+        {/* Board sections */}
+        <section className="space-y-10">
           <BoardSection
             title="Your boards"
             subtitle="Owned by you"
@@ -150,8 +158,8 @@ interface BoardRow {
 function StatCard({ label, value }: { label: string; value: number }) {
   return (
     <div className="ui-card p-4 sm:p-5">
-      <p className="text-2xl sm:text-3xl font-semibold tabular-nums text-[var(--text)]">{value}</p>
-      <p className="text-[11px] sm:text-xs uppercase tracking-wider text-[var(--text-dim)] mt-1">{label}</p>
+      <p className="text-2xl sm:text-3xl font-semibold tabular-nums text-[var(--text)] leading-none">{value}</p>
+      <p className="text-[11px] sm:text-xs uppercase tracking-wider text-[var(--text-dim)] mt-1.5">{label}</p>
     </div>
   );
 }
@@ -159,9 +167,9 @@ function StatCard({ label, value }: { label: string; value: number }) {
 function BoardSection({ title, subtitle, action, children }: { title: string; subtitle: string; action?: React.ReactNode; children: React.ReactNode }) {
   return (
     <section>
-      <div className="flex items-center justify-between gap-4 mb-4">
+      <div className="flex items-center justify-between gap-4 mb-5">
         <div>
-          <h2 className="text-lg font-semibold text-[var(--text)]">{title}</h2>
+          <h2 className="text-base sm:text-lg font-semibold text-[var(--text)]">{title}</h2>
           <p className="text-sm text-[var(--text-soft)] mt-0.5">{subtitle}</p>
         </div>
         {action}
@@ -174,15 +182,15 @@ function BoardSection({ title, subtitle, action, children }: { title: string; su
 function EmptyState({ title, description, cta }: { title: string; description: string; cta?: React.ReactNode }) {
   return (
     <div className="ui-card min-h-[18rem] flex flex-col items-center justify-center text-center px-6 py-16 gap-5">
-      <div className="w-14 h-14 rounded-3xl bg-[var(--accent-soft)] flex items-center justify-center text-[var(--accent)]">
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <div className="w-12 h-12 rounded-[var(--radius-xl)] bg-[var(--accent-soft)] flex items-center justify-center text-[var(--accent)]">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
           <path d="M4 5a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2z" />
           <path d="M9 9h6M9 13h6M9 17h3" />
         </svg>
       </div>
       <div>
         <p className="text-base font-semibold text-[var(--text)]">{title}</p>
-        <p className="text-sm text-[var(--text-soft)] mt-1 max-w-sm">{description}</p>
+        <p className="text-sm text-[var(--text-soft)] mt-1 max-w-xs">{description}</p>
       </div>
       {cta}
     </div>
@@ -207,16 +215,15 @@ function BoardGrid({
           <button
             key={String(board.id)}
             onClick={() => onOpen(board.id)}
-            className="ui-card group text-left p-4 transition-all duration-150
-                       hover:border-[var(--border-strong)] hover:-translate-y-px
-                       hover:shadow-[0_2px_8px_-2px_rgba(0,0,0,0.06)]
-                       dark:hover:shadow-[0_2px_12px_-2px_rgba(0,0,0,0.5)]"
+            className="ui-card group text-left p-4 sm:p-5 transition-all duration-150
+                       hover:border-[var(--border-strong)] hover:-translate-y-0.5
+                       hover:shadow-[var(--shadow-lg)] cursor-pointer"
           >
-            <div className="flex items-start justify-between gap-2 mb-1.5">
-              <h3 className="font-medium text-[var(--text)] truncate text-sm leading-snug">
+            <div className="flex items-start justify-between gap-2 mb-2">
+              <h3 className="font-semibold text-[var(--text)] truncate text-sm leading-snug">
                 {board.title}
               </h3>
-              <span className={`shrink-0 text-[10px] uppercase tracking-wider font-medium px-1.5 py-0.5 rounded
+              <span className={`shrink-0 ui-badge
                                 ${isPublic
                                   ? 'bg-[var(--accent-soft)] text-[var(--accent)]'
                                   : 'bg-[var(--surface-2)] text-[var(--text-dim)]'}`}>
@@ -224,19 +231,29 @@ function BoardGrid({
               </span>
             </div>
             {board.description ? (
-              <p className="text-xs text-[var(--text-soft)] line-clamp-2 mb-3 min-h-[2rem]">
+              <p className="text-xs text-[var(--text-soft)] leading-relaxed line-clamp-2 mb-4 min-h-[2rem]">
                 {board.description}
               </p>
             ) : (
-              <p className="text-xs text-[var(--text-dim)] italic mb-3 min-h-[2rem]">No description</p>
+              <p className="text-xs text-[var(--text-dim)] italic mb-4 min-h-[2rem]">No description</p>
             )}
-            <div className="flex items-center gap-3 text-[11px] text-[var(--text-dim)] pt-2 border-t border-[var(--border)]">
-              <span className="inline-flex items-center gap-1">
+            <div className="flex items-center gap-3 text-[11px] text-[var(--text-dim)] pt-3 border-t border-[var(--border)]">
+              <span className="inline-flex items-center gap-1.5">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="text-[var(--text-dim)] opacity-60">
+                  <rect x="2" y="3" width="20" height="14" rx="2"/>
+                  <path d="M8 21h8M12 17v4"/>
+                </svg>
                 <span className="text-[var(--text-soft)] font-medium tabular-nums">{items}</span>
                 <span>{items === 1 ? 'title' : 'titles'}</span>
               </span>
-              <span className="opacity-50">·</span>
-              <span className="inline-flex items-center gap-1">
+              <span className="opacity-30">·</span>
+              <span className="inline-flex items-center gap-1.5">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="text-[var(--text-dim)] opacity-60">
+                  <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                  <circle cx="9" cy="7" r="4"/>
+                  <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+                  <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+                </svg>
                 <span className="text-[var(--text-soft)] font-medium tabular-nums">{parts}</span>
                 <span>{parts === 1 ? 'member' : 'members'}</span>
               </span>

@@ -4,28 +4,45 @@ type Variant = 'primary' | 'secondary' | 'danger' | 'ghost' | 'outline';
 type Size = 'sm' | 'md' | 'lg';
 
 const base =
-  'inline-flex items-center justify-center gap-1.5 font-medium rounded-2xl ' +
-  'transition-[transform,background-color,border-color,color,box-shadow,opacity] duration-150 ' +
-  'select-none whitespace-nowrap active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed ' +
+  'inline-flex items-center justify-center gap-1.5 font-medium ' +
+  'transition-all duration-150 ' +
+  'select-none whitespace-nowrap ' +
+  'disabled:opacity-40 disabled:cursor-not-allowed disabled:pointer-events-none ' +
   'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ring)] focus-visible:ring-offset-0';
 
 const variants: Record<Variant, string> = {
   primary:
-    'bg-[var(--text)] text-[var(--bg)] border border-transparent shadow-[var(--shadow-sm)] hover:opacity-90',
+    'bg-[var(--text)] text-[var(--bg)] rounded-[var(--radius-lg)] ' +
+    'shadow-[var(--shadow-sm)] ' +
+    'hover:brightness-110 hover:shadow-[var(--shadow-md)] ' +
+    'active:brightness-95 active:scale-[0.98] ' +
+    'dark:bg-[var(--text)] dark:text-[var(--bg)]',
   secondary:
-    'bg-[var(--surface-solid)]/80 text-[var(--text)] border border-[var(--border)] shadow-[var(--shadow-sm)] hover:bg-[var(--surface-hover)] hover:border-[var(--border-strong)]',
+    'bg-[var(--surface-solid)]/80 text-[var(--text)] rounded-[var(--radius-lg)] ' +
+    'border border-[var(--border)] ' +
+    'shadow-[var(--shadow-xs)] ' +
+    'hover:bg-[var(--surface-hover)] hover:border-[var(--border-strong)] hover:shadow-[var(--shadow-sm)] ' +
+    'active:scale-[0.98]',
   outline:
-    'bg-transparent text-[var(--text)] border border-[var(--border)] hover:bg-[var(--surface-2)] hover:border-[var(--border-strong)]',
+    'bg-transparent text-[var(--text)] rounded-[var(--radius-lg)] ' +
+    'border border-[var(--border)] ' +
+    'hover:bg-[var(--surface-2)] hover:border-[var(--border-strong)] ' +
+    'active:scale-[0.98]',
   danger:
-    'bg-[var(--danger)] text-white border border-transparent shadow-[var(--shadow-sm)] hover:opacity-90',
+    'bg-[var(--danger)] text-white rounded-[var(--radius-lg)] ' +
+    'shadow-[var(--shadow-sm)] ' +
+    'hover:brightness-110 hover:shadow-[var(--shadow-md)] ' +
+    'active:brightness-95 active:scale-[0.98]',
   ghost:
-    'bg-transparent text-[var(--text-soft)] hover:text-[var(--text)] hover:bg-[var(--surface-2)]',
+    'bg-transparent text-[var(--text-soft)] rounded-[var(--radius-lg)] ' +
+    'hover:text-[var(--text)] hover:bg-[var(--surface-2)] ' +
+    'active:bg-[var(--surface-hover)] active:scale-[0.98]',
 };
 
 const sizes: Record<Size, string> = {
-  sm: 'h-8 px-3 text-xs',
+  sm: 'h-8 px-3 text-xs gap-1',
   md: 'h-10 px-4 text-sm',
-  lg: 'h-12 px-5 text-sm',
+  lg: 'h-11 px-5 text-sm',
 };
 
 export function Button({

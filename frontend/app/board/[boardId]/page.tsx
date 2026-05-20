@@ -191,22 +191,22 @@ function BoardPageInner() {
   return (
     <div className="h-screen flex flex-col overflow-hidden" style={{ background: theme['card.bg'] }}>
       <ConnectionBanner />
-      <header className="border-b border-[var(--border)] bg-[var(--surface)]
-                         px-3 sm:px-4 h-12 flex items-center justify-between gap-2 z-10 shrink-0">
+      <header className="border-b border-[var(--border)] bg-[var(--surface)]/75 backdrop-blur-xl
+                         px-2 sm:px-3 h-12 flex items-center justify-between gap-2 z-10 shrink-0">
         {/* Left: back + title */}
-        <div className="flex items-center gap-1 sm:gap-2 min-w-0">
+        <div className="flex items-center gap-1.5 sm:gap-2.5 min-w-0">
           <Button variant="ghost" size="sm" onClick={() => router.push('/')}
-                  className="shrink-0 !px-2">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  className="shrink-0 !px-1.5">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M19 12H5M12 19l-7-7 7-7"/>
             </svg>
             <span className="hidden sm:inline">Boards</span>
           </Button>
-          <span className="text-[var(--border-strong)] select-none shrink-0">/</span>
-          <h1 className="font-medium text-sm text-[var(--text)] truncate">
+          <span className="text-[var(--border-strong)] select-none shrink-0 text-sm">/</span>
+          <h1 className="font-medium text-sm text-[var(--text)] truncate max-w-[20ch] sm:max-w-[40ch]">
             {board?.title ?? `Board ${boardId}`}
           </h1>
-          <span className="hidden md:inline-flex text-[10px] px-1.5 py-0.5 rounded
+          <span className="hidden md:inline-flex text-[10px] px-1.5 py-0.5 rounded-[var(--radius-sm)]
                            bg-[var(--surface-2)] text-[var(--text-dim)]
                            font-mono select-none shrink-0 tabular-nums">
             {zoomLabel}
@@ -214,16 +214,16 @@ function BoardPageInner() {
         </div>
 
         {/* Right: actions */}
-        <div className="flex items-center gap-1 shrink-0">
+        <div className="flex items-center gap-0.5 sm:gap-1 shrink-0">
           {canvasItems.length > 0 && (
             <button
               title="Fit to view (double-click canvas)"
               onClick={() => fitViewRef.current?.()}
-              className="w-8 h-8 flex items-center justify-center rounded-md
+              className="w-7 h-7 sm:w-8 sm:h-8 flex items-center justify-center rounded-[var(--radius-sm)]
                          text-[var(--text-dim)] hover:text-[var(--text)]
                          hover:bg-[var(--surface-2)] transition-colors"
             >
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M3 7V5a2 2 0 0 1 2-2h2M17 3h2a2 2 0 0 1 2 2v2M21 17v2a2 2 0 0 1-2 2h-2M7 21H5a2 2 0 0 1-2-2v-2"/>
               </svg>
             </button>
@@ -236,7 +236,7 @@ function BoardPageInner() {
                 onImport={handleImport}
               />
               <ThemeToggle />
-              <Button variant="ghost" size="sm" className="shrink-0 !px-2"
+              <Button variant="ghost" size="sm" className="shrink-0 !px-1.5"
                       onClick={() => router.push(`/board/${boardId}/settings`)}>
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <circle cx="12" cy="12" r="3"/>
@@ -248,7 +248,7 @@ function BoardPageInner() {
           )}
           {authMode !== 'owner' && <ThemeToggle />}
           {authMode === 'public' && (
-            <span className="text-[10px] uppercase tracking-wider font-medium text-[var(--text-dim)] bg-[var(--surface-2)] px-2 py-1 rounded">
+            <span className="text-[10px] uppercase tracking-wider font-medium text-[var(--text-dim)] bg-[var(--surface-2)] px-2 py-1 rounded-[var(--radius-sm)]">
               View only
             </span>
           )}
@@ -257,18 +257,25 @@ function BoardPageInner() {
 
       <main className="flex-1 relative overflow-hidden">
         {canvasItems.length === 0 ? (
-          <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 text-[var(--text-dim)]">
-            <div className="w-12 h-12 rounded-full bg-[var(--surface-2)] flex items-center justify-center">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+          <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 text-[var(--text-dim)]">
+            <div className="w-14 h-14 rounded-[var(--radius-2xl)] bg-[var(--surface-2)] flex items-center justify-center border border-[var(--border)]">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
                 <rect x="2" y="3" width="20" height="14" rx="2"/>
                 <path d="M8 21h8M12 17v4"/>
               </svg>
             </div>
-            <p className="text-sm text-[var(--text-soft)]">
-              {authMode === 'owner'
-                ? 'Search for a movie or show to add it to this board.'
-                : 'No media items yet.'}
-            </p>
+            <div className="text-center max-w-xs">
+              <p className="text-sm font-medium text-[var(--text-muted)]">
+                {authMode === 'owner'
+                  ? 'Start adding media'
+                  : 'No media items yet'}
+              </p>
+              <p className="text-xs text-[var(--text-soft)] mt-1 leading-relaxed">
+                {authMode === 'owner'
+                  ? 'Search for a movie or show using the search bar above.'
+                  : 'The board owner hasn\'t added any media yet.'}
+              </p>
+            </div>
           </div>
         ) : (
           <BoardCanvas
@@ -290,7 +297,7 @@ function BoardPageInner() {
         )}
       </main>
 
-      <footer className="text-center text-[10px] text-[var(--text-dim)] py-1.5 shrink-0 border-t border-[var(--border)]">
+      <footer className="text-center text-[10px] text-[var(--text-dim)] leading-none py-2.5 shrink-0 border-t border-[var(--border)]">
         This product uses the TMDB API but is not endorsed or certified by TMDB.
       </footer>
     </div>
@@ -300,6 +307,16 @@ function BoardPageInner() {
 export default function BoardPage() {
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
-  if (!mounted) return <div className="h-screen flex items-center justify-center"><p className="text-[var(--text-dim)] text-sm">Loading…</p></div>;
+  if (!mounted) return (
+    <div className="h-screen flex items-center justify-center">
+      <div className="flex items-center gap-2.5 text-[var(--text-dim)]">
+        <svg className="animate-spin w-4 h-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+        </svg>
+        <p className="text-sm">Loading…</p>
+      </div>
+    </div>
+  );
   return <BoardPageInner />;
 }

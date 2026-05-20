@@ -51,8 +51,8 @@ export default function SignInPage() {
       <div className="absolute top-3 right-3"><ThemeToggle /></div>
       <div className="w-full max-w-sm ui-card p-8 space-y-7">
         <div className="text-center space-y-2">
-          <div className="inline-flex items-center gap-2 mb-1">
-            <span className="w-7 h-7 rounded-xl bg-gradient-to-br from-indigo-500 to-sky-400 shadow-[0_10px_28px_-12px_rgba(99,102,241,0.9)]" aria-hidden />
+          <div className="inline-flex items-center gap-2.5 mb-1">
+            <span className="w-8 h-8 rounded-[var(--radius-lg)] bg-gradient-to-br from-indigo-500 to-sky-400 shadow-[0_10px_28px_-12px_rgba(99,102,241,0.9)]" aria-hidden />
             <span className="text-lg font-semibold tracking-tight text-[var(--text)]">IHaveWatched</span>
           </div>
           <p className="text-[var(--text-soft)] text-sm">
@@ -71,7 +71,7 @@ export default function SignInPage() {
             autoFocus
           />
           <Button type="submit" disabled={loading} className="w-full" size="lg">
-            {loading ? 'Setting up…' : 'Get started →'}
+            {loading ? 'Setting up…' : 'Get started'}
           </Button>
         </form>
 

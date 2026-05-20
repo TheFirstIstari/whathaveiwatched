@@ -49,11 +49,11 @@ export function NodeCard({
 }: NodeCardProps) {
   const nodeRef = useRef<Konva.Group>(null);
   const { w, h } = nodeDimensions(mediaType);
-  const posterH = Math.floor(h * 0.55);
+  const posterH = Math.floor(h * 0.56);
   const poster = useKonvaImage(posterUrl);
   const chipDiam = scale >= 0.7 ? 20 : 14;
-  const cornerR = mediaType === 'SHOW' || mediaType === 'FILM' ? 12
-                : mediaType === 'SEASON' || mediaType === 'ARC' ? 10 : 9;
+  const cornerR = mediaType === 'SHOW' || mediaType === 'FILM' ? 14
+                : mediaType === 'SEASON' || mediaType === 'ARC' ? 12 : 10;
 
   const watchColor = watchState === 'WATCHED' ? theme['chip.watched']
                    : watchState === 'PARTIAL' ? theme['chip.partial']
@@ -63,7 +63,7 @@ export function NodeCard({
   const typeLabel = TYPE_LABELS[mediaType] ?? mediaType;
 
   const handleMouseEnter = (e: Konva.KonvaEventObject<MouseEvent>) => {
-    nodeRef.current?.to({ scaleX: 1.025, scaleY: 1.025, duration: 0.08 });
+    nodeRef.current?.to({ scaleX: 1.04, scaleY: 1.04, duration: 0.12 });
     const stage = e.target.getStage();
     if (stage) stage.container().style.cursor = 'pointer';
     const pos = e.target.getStage()?.getPointerPosition() ?? { x: 0, y: 0 };
@@ -71,7 +71,7 @@ export function NodeCard({
   };
 
   const handleMouseLeave = (e: Konva.KonvaEventObject<MouseEvent>) => {
-    nodeRef.current?.to({ scaleX: 1.0, scaleY: 1.0, duration: 0.08 });
+    nodeRef.current?.to({ scaleX: 1.0, scaleY: 1.0, duration: 0.12 });
     const stage = e.target.getStage();
     if (stage) stage.container().style.cursor = 'grab';
     onHideTooltip();
@@ -90,9 +90,11 @@ export function NodeCard({
   };
 
   // Watched badge at top-right
-  const badgeSize = 18;
-  const badgeX = w - badgeSize - 6;
+  const badgeSize = 20;
+  const badgeX = w - badgeSize - 7;
   const badgeY = 8;
+  const isWatched = watchState === 'WATCHED';
+  const isPartial = watchState === 'PARTIAL';
 
   return (
     <Group
@@ -104,68 +106,83 @@ export function NodeCard({
       onClick={handleClick}
       onContextMenu={handleContextMenu}
     >
+      {/* Shadow beneath card */}
+      <Rect
+        width={w}
+        height={h}
+        fill="transparent"
+        cornerRadius={cornerR}
+        shadowColor={theme['card.shadow']}
+        shadowBlur={isWatched ? 14 : 6}
+        shadowOffsetY={isWatched ? 6 : 3}
+        shadowOpacity={isWatched ? 0.35 : 0.20}
+        listening={false}
+      />
+
       {/* Card background */}
       <Rect
         name="card-bg"
         width={w}
         height={h}
         fill={theme['card.bg']}
-        stroke={watchState === 'WATCHED' ? theme['chip.watched'] : theme['card.border']}
-        strokeWidth={watchState === 'WATCHED' ? 2 : 1.4}
+        stroke={isWatched || isPartial ? watchColor : theme['card.border']}
+        strokeWidth={isWatched || isPartial ? 2 : 1.2}
         cornerRadius={cornerR}
-        shadowColor={theme['card.shadow']}
-        shadowBlur={watchState === 'WATCHED' ? 8 : 4}
-        shadowOffsetY={watchState === 'WATCHED' ? 4 : 2}
+        listening={false}
       />
 
-      {/* Watch state accent bar at top */}
-      <Rect
-        width={w}
-        height={0}
-        fill={watchColor}
-        cornerRadius={[cornerR, cornerR, 0, 0]}
-      />
-
-      {/* Poster image */}
+      {/* Poster area */}
       {poster.status === 'loaded' ? (
         <KonvaImage
           image={poster.image}
           width={w}
           height={posterH}
-          y={3}
-          cornerRadius={[cornerR - 2, cornerR - 2, 0, 0]}
+          y={2}
+          cornerRadius={[cornerR - 1, cornerR - 1, 0, 0]}
           listening={false}
         />
       ) : (
         <Rect
           width={w}
           height={posterH}
-          y={3}
+          y={2}
           fill={theme['card.border']}
-          opacity={0.12}
-          cornerRadius={[cornerR - 2, cornerR - 2, 0, 0]}
+          opacity={0.10}
+          cornerRadius={[cornerR - 1, cornerR - 1, 0, 0]}
           listening={false}
         />
       )}
+
+      {/* Gradient overlay at bottom of poster for text legibility */}
+      <Rect
+        width={w}
+        height={16}
+        y={posterH - 12}
+        fillLinearGradientStartPoint={{ x: 0, y: 0 }}
+        fillLinearGradientEndPoint={{ x: 0, y: 16 }}
+        fillLinearGradientColorStops={[0, 'rgba(0,0,0,0)', 1, 'rgba(0,0,0,0.06)']}
+        listening={false}
+      />
 
       {/* Type badge (top-left on poster) */}
       {scale >= 0.4 && (
         <>
           <Rect
-            x={6}
-            y={9}
-            width={typeLabel.length * 6 + 10}
-            height={15}
+            x={7}
+            y={8}
+            width={typeLabel.length * 6 + 12}
+            height={17}
             fill={theme['card.bg']}
             stroke={typeColor}
-            strokeWidth={1}
-            cornerRadius={5}
+            strokeWidth={1.2}
+            cornerRadius={6}
             listening={false}
+            opacity={0.92}
           />
           <Text
             text={typeLabel}
-            x={11}
-            y={12.5}
+            x={13}
+            y={12}
             fontSize={8.5}
             fontStyle="bold"
             fill={typeColor}
@@ -175,8 +192,18 @@ export function NodeCard({
       )}
 
       {/* Watched checkmark badge (top-right) */}
-      {watchState === 'WATCHED' && scale >= 0.5 && (
+      {isWatched && scale >= 0.5 && (
         <>
+          {/* Outer ring */}
+          <Rect
+            x={badgeX - 1}
+            y={badgeY - 1}
+            width={badgeSize + 2}
+            height={badgeSize + 2}
+            fill={theme['card.bg']}
+            cornerRadius={(badgeSize + 2) / 2}
+            listening={false}
+          />
           <Rect
             x={badgeX}
             y={badgeY}
@@ -185,12 +212,48 @@ export function NodeCard({
             fill={theme['chip.watched']}
             cornerRadius={badgeSize / 2}
             listening={false}
+            shadowColor="rgba(0,0,0,0.15)"
+            shadowBlur={4}
+            shadowOffsetY={1}
           />
           <Text
             text="✓"
-            x={badgeX + 3}
-            y={badgeY + 3}
-            fontSize={11}
+            x={badgeX + 4}
+            y={badgeY + 3.5}
+            fontSize={12}
+            fill="#FFFFFF"
+            fontStyle="bold"
+            listening={false}
+          />
+        </>
+      )}
+
+      {/* Partial accent dot */}
+      {isPartial && !isWatched && (
+        <>
+          <Rect
+            x={badgeX - 1}
+            y={badgeY - 1}
+            width={badgeSize + 2}
+            height={badgeSize + 2}
+            fill={theme['card.bg']}
+            cornerRadius={(badgeSize + 2) / 2}
+            listening={false}
+          />
+          <Rect
+            x={badgeX}
+            y={badgeY}
+            width={badgeSize}
+            height={badgeSize}
+            fill={theme['chip.partial']}
+            cornerRadius={badgeSize / 2}
+            listening={false}
+          />
+          <Text
+            text="~"
+            x={badgeX + 4}
+            y={badgeY + 2.5}
+            fontSize={13}
             fill="#FFFFFF"
             fontStyle="bold"
             listening={false}
@@ -201,9 +264,9 @@ export function NodeCard({
       {/* Title */}
       <Text
         text={title}
-        x={6}
-        y={posterH + 10}
-        width={w - 12}
+        x={8}
+        y={posterH + 9}
+        width={w - 16}
         fontSize={13}
         fontStyle="bold"
         fill={theme['card.title']}
@@ -215,10 +278,10 @@ export function NodeCard({
       {/* Subtitle */}
       <Text
         text={subtitle}
-        x={6}
-        y={posterH + 26}
-        width={w - 12}
-        fontSize={11}
+        x={8}
+        y={posterH + 24}
+        width={w - 16}
+        fontSize={10.5}
         fill={theme['card.subtitle']}
         ellipsis
         wrap="none"
@@ -229,21 +292,22 @@ export function NodeCard({
       {isOwnerOrParticipant && (
         <WatchChips
           participants={participants}
-          x={6}
-          y={h - chipDiam - 8}
+          x={8}
+          y={h - chipDiam - 10}
           chipDiameter={chipDiam}
         />
       )}
 
       {/* Partial progress bar at bottom */}
-      {watchState === 'PARTIAL' && (
+      {isPartial && (
         <Rect
-          width={w}
+          width={w * 0.5}
           height={3}
           y={h - 3}
           fill={theme['chip.partial']}
-          cornerRadius={[0, 0, cornerR, cornerR]}
+          cornerRadius={[0, 0, 0, cornerR]}
           listening={false}
+          opacity={0.6}
         />
       )}
     </Group>

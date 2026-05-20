@@ -123,22 +123,22 @@ function BoardSettingsInner() {
 
   return (
     <div className="min-h-screen">
-      <header className="sticky top-0 z-20 border-b border-[var(--border)] bg-[var(--bg)]/85 backdrop-blur-md">
-        <div className="max-w-2xl mx-auto px-6 h-14 flex items-center gap-3">
+      <header className="sticky top-0 z-20 border-b border-[var(--border)] bg-[var(--surface)]/70 backdrop-blur-xl">
+        <div className="max-w-2xl mx-auto px-4 sm:px-6 h-14 flex items-center gap-2.5">
           <Button variant="ghost" size="sm" onClick={() => router.push(`/board/${boardId}`)} className="!px-2">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M19 12H5M12 19l-7-7 7-7"/>
             </svg>
             Back
           </Button>
-          <span className="text-[var(--border-strong)] select-none">/</span>
+          <span className="text-[var(--border-strong)] select-none text-sm">/</span>
           <h1 className="text-sm font-medium text-[var(--text)] truncate">{board?.title ?? 'Settings'}</h1>
-          <span className="text-[10px] uppercase tracking-wider text-[var(--text-dim)] ml-1">Settings</span>
+          <span className="text-[10px] uppercase tracking-wider text-[var(--text-dim)] ml-0.5">Settings</span>
           <div className="ml-auto"><ThemeToggle /></div>
         </div>
       </header>
 
-      <main className="max-w-2xl mx-auto px-6 py-8 space-y-5">
+      <main className="max-w-2xl mx-auto px-4 sm:px-6 py-8 space-y-5">
 
         {/* Stats */}
         {board && (
@@ -148,7 +148,7 @@ function BoardSettingsInner() {
               { label: 'Items', value: totalItems },
               { label: 'Members', value: boardParticipants.length + 1 },
             ].map(stat => (
-              <div key={stat.label} className="ui-card px-4 py-3">
+              <div key={stat.label} className="ui-card px-4 py-3.5">
                 <p className="text-xl font-semibold text-[var(--text)] tabular-nums leading-none">{stat.value}</p>
                 <p className="text-[11px] text-[var(--text-dim)] mt-1.5 uppercase tracking-wider">{stat.label}</p>
               </div>
@@ -184,9 +184,9 @@ function BoardSettingsInner() {
                 const checked = sharingMode === mode;
                 return (
                   <label key={mode}
-                         className={`flex items-start gap-3 p-3 rounded-md cursor-pointer border transition-colors
+                         className={`flex items-start gap-3 p-3 rounded-[var(--radius-md)] cursor-pointer border transition-colors
                                      ${checked
-                                       ? 'border-[var(--accent)] bg-[var(--accent-soft)]'
+                                       ? 'border-[var(--border-accent)] bg-[var(--accent-soft)]'
                                        : 'border-[var(--border)] hover:bg-[var(--surface-2)]'}`}>
                     <input type="radio" name="sharing" value={mode}
                            checked={checked} onChange={() => setSharing(mode)}
@@ -221,7 +221,7 @@ function BoardSettingsInner() {
             </Button>
           </div>
           <button
-            className="mt-3 text-xs text-[var(--text-dim)] hover:text-[var(--text)] transition-colors inline-flex items-center gap-1"
+            className="mt-3 text-xs text-[var(--text-dim)] hover:text-[var(--text)] transition-colors inline-flex items-center gap-1.5"
             onClick={handleRegenInvite}
           >
             <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -235,27 +235,27 @@ function BoardSettingsInner() {
         <SettingsSection title={`Members · ${boardParticipants.length + 1}`} description="People with access to this board.">
           <ul className="-mx-2 -my-1">
             {/* Owner row */}
-            <li className="flex items-center justify-between px-2 py-2 rounded-md">
+            <li className="flex items-center justify-between px-2 py-2.5 rounded-[var(--radius-sm)]">
               <div className="flex items-center gap-2.5">
-                <div className="w-7 h-7 rounded-full bg-[var(--accent-soft)] flex items-center justify-center text-xs font-semibold text-[var(--accent)]">
+                <div className="ui-avatar bg-[var(--accent-soft)] text-[var(--accent)]">
                   {ownerName.charAt(0).toUpperCase()}
                 </div>
-                <span className="text-sm text-[var(--text)]">{ownerName}</span>
+                <span className="text-sm text-[var(--text)] font-medium">{ownerName}</span>
               </div>
-              <span className="text-[10px] uppercase tracking-wider font-medium px-1.5 py-0.5 rounded bg-[var(--accent-soft)] text-[var(--accent)]">
+              <span className="ui-badge bg-[var(--accent-soft)] text-[var(--accent)]">
                 Owner
               </span>
             </li>
             {boardParticipants.map(p => (
-              <li key={String(p.id)} className="flex items-center justify-between px-2 py-2 rounded-md ui-row-hover group">
+              <li key={String(p.id)} className="flex items-center justify-between px-2 py-2.5 rounded-[var(--radius-sm)] ui-row-hover group">
                 <div className="flex items-center gap-2.5">
-                  <div className="w-7 h-7 rounded-full bg-[var(--surface-2)] flex items-center justify-center text-xs font-semibold text-[var(--text-soft)]">
+                  <div className="ui-avatar bg-[var(--surface-2)] text-[var(--text-soft)]">
                     {p.displayName.charAt(0).toUpperCase()}
                   </div>
                   <span className="text-sm text-[var(--text)]">{p.displayName}</span>
                 </div>
                 <button
-                  className="text-[11px] text-[var(--text-dim)] hover:text-[var(--danger)] opacity-0 group-hover:opacity-100 transition-opacity px-1.5 py-1"
+                  className="text-[11px] text-[var(--text-dim)] hover:text-[var(--danger)] opacity-0 group-hover:opacity-100 transition-opacity px-1.5 py-1 rounded-[var(--radius-sm)] hover:bg-[var(--danger-soft)]"
                   onClick={() => handleRemoveParticipant(p.id, p.displayName)}
                 >
                   Remove
@@ -266,14 +266,14 @@ function BoardSettingsInner() {
         </SettingsSection>
 
         {/* Danger zone */}
-        <section className="ui-card border-[var(--danger)]/30 p-6">
+        <section className="ui-card border-[var(--danger)]/20 p-6 hover:border-[var(--danger)]/30">
           <div className="mb-4">
             <h2 className="text-sm font-semibold text-[var(--danger)]">Danger zone</h2>
             <p className="text-xs text-[var(--text-soft)] mt-0.5">Permanent and irreversible actions.</p>
           </div>
           {deleteConfirm ? (
-            <div className="space-y-3 p-3 rounded-md bg-[var(--danger-soft)] border border-[var(--danger)]/20">
-              <p className="text-sm text-[var(--text)]">Permanently delete this board and all its data?</p>
+            <div className="space-y-3 p-4 rounded-[var(--radius-md)] bg-[var(--danger-soft)] border border-[var(--danger)]/20">
+              <p className="text-sm text-[var(--text)] font-medium">Permanently delete this board and all its data?</p>
               <div className="flex gap-2">
                 <Button variant="danger" size="sm" onClick={handleDelete}>Yes, delete</Button>
                 <Button variant="secondary" size="sm" onClick={() => setDC(false)}>Cancel</Button>

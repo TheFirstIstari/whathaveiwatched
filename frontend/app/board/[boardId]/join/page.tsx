@@ -73,7 +73,7 @@ function JoinBoardPageInner() {
     <div className="flex min-h-screen items-center justify-center p-4">
       <div className="w-full max-w-sm ui-card p-8 space-y-6">
         {reason === 'session_expired' && (
-          <p className="text-xs text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-900/30 rounded-md px-3 py-2">
+          <p className="text-xs text-[var(--warning)] bg-[var(--warning)]/10 border border-[var(--warning)]/20 rounded-[var(--radius-md)] px-3 py-2">
             Your session expired. Please rejoin to continue tracking.
           </p>
         )}

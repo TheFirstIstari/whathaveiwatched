@@ -14,25 +14,25 @@ export function Modal({ open, onOpenChange, title, description, children }: Moda
     <Dialog.Root open={open} onOpenChange={onOpenChange}>
       <Dialog.Portal>
         <Dialog.Overlay
-          className="fixed inset-0 bg-black/50 backdrop-blur-[2px] z-40
+          className="fixed inset-0 bg-black/40 backdrop-blur-[3px] z-40
                      data-[state=open]:animate-in data-[state=open]:fade-in
                      data-[state=closed]:animate-out data-[state=closed]:fade-out" />
         <Dialog.Content
           className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2
                      w-[calc(100vw-2rem)] max-w-md ui-card p-6 z-50 focus:outline-none
-                     shadow-[0_24px_64px_-12px_rgba(0,0,0,0.25)] dark:shadow-[0_24px_64px_-12px_rgba(0,0,0,0.7)]
+                     shadow-[var(--shadow-xl)]
                      data-[state=open]:animate-in data-[state=open]:zoom-in-95 data-[state=open]:fade-in
                      data-[state=closed]:animate-out data-[state=closed]:zoom-out-95">
           <div className="mb-4 pr-8">
             <Dialog.Title className="text-base font-semibold text-[var(--text)] tracking-tight">{title}</Dialog.Title>
             {description && (
-              <Dialog.Description className="text-xs text-[var(--text-soft)] mt-1">{description}</Dialog.Description>
+              <Dialog.Description className="text-xs text-[var(--text-soft)] mt-1 leading-relaxed">{description}</Dialog.Description>
             )}
           </div>
           {children}
           <Dialog.Close
             aria-label="Close"
-            className="absolute top-4 right-4 w-7 h-7 flex items-center justify-center rounded-md
+            className="absolute top-4 right-4 w-7 h-7 flex items-center justify-center rounded-[var(--radius-sm)]
                        text-[var(--text-dim)] hover:bg-[var(--surface-2)] hover:text-[var(--text)] transition-colors"
           >
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
