@@ -9,6 +9,7 @@ import { tables, reducers } from '@/src/module_bindings';
 import { getDisplayName, getIdentityHex, clearIdentityToken } from '@/lib/db/connection';
 import { Button } from '@/components/ui/Button';
 import { ConnectionBanner } from '@/components/ui/ConnectionBanner';
+import { ThemeToggle } from '@/components/ui/ThemeToggle';
 
 // Inner component — only rendered after client mount, so SpacetimeDB hooks are safe
 function DashboardInner() {
@@ -66,10 +67,11 @@ function DashboardInner() {
             <span className="w-6 h-6 rounded-md bg-gradient-to-br from-indigo-500 to-violet-500" aria-hidden />
             <span className="font-semibold tracking-tight text-[var(--text)]">IHaveWatched</span>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1">
             {displayName && (
-              <span className="hidden sm:inline text-sm text-[var(--text-soft)]">{displayName}</span>
+              <span className="hidden sm:inline text-sm text-[var(--text-soft)] mr-2">{displayName}</span>
             )}
+            <ThemeToggle />
             <Button variant="ghost" size="sm" onClick={() => {
               clearIdentityToken();
               localStorage.removeItem('ihw_display_name');

@@ -14,7 +14,7 @@ export default function AuthCallback() {
   }, [router]);
   return (
     <div className="flex min-h-screen items-center justify-center">
-      <p className="text-gray-500 text-sm">Redirecting…</p>
+      <p className="text-[var(--text-soft)] text-sm">Redirecting…</p>
     </div>
   );
 }

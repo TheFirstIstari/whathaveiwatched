@@ -12,6 +12,7 @@ import { useRouter } from 'next/navigation';
 import { getIdentityToken, getDisplayName, setDisplayName } from '@/lib/db/connection';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
+import { ThemeToggle } from '@/components/ui/ThemeToggle';
 
 export default function SignInPage() {
   const router = useRouter();
@@ -46,7 +47,8 @@ export default function SignInPage() {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center p-4">
+    <div className="relative flex min-h-screen items-center justify-center p-4">
+      <div className="absolute top-3 right-3"><ThemeToggle /></div>
       <div className="w-full max-w-sm ui-card p-8 space-y-7">
         <div className="text-center space-y-2">
           <div className="inline-flex items-center gap-2 mb-1">

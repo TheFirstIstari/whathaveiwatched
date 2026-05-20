@@ -9,6 +9,7 @@ import { tables, reducers } from '@/src/module_bindings';
 import { getDisplayName, getIdentityHex, getParticipantState } from '@/lib/db/connection';
 import { ConnectionBanner } from '@/components/ui/ConnectionBanner';
 import { Button } from '@/components/ui/Button';
+import { ThemeToggle } from '@/components/ui/ThemeToggle';
 import { BoardCanvas, type BoardMediaItem, type BoardParticipant, type WatchEntryData, type WatchAggData, type FitViewFn } from '@/components/canvas/BoardCanvas';
 import { AddMediaSearch } from '@/components/board/AddMediaSearch';
 import { importMedia } from '@/lib/db/importMedia';
@@ -234,6 +235,7 @@ function BoardPageInner() {
                 existingTmdbIds={existingTmdbIds}
                 onImport={handleImport}
               />
+              <ThemeToggle />
               <Button variant="ghost" size="sm" className="shrink-0 !px-2"
                       onClick={() => router.push(`/board/${boardId}/settings`)}>
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -244,6 +246,7 @@ function BoardPageInner() {
               </Button>
             </>
           )}
+          {authMode !== 'owner' && <ThemeToggle />}
           {authMode === 'public' && (
             <span className="text-[10px] uppercase tracking-wider font-medium text-[var(--text-dim)] bg-[var(--surface-2)] px-2 py-1 rounded">
               View only

@@ -9,6 +9,7 @@ import { tables, reducers } from '@/src/module_bindings';
 import { getDisplayName, getIdentityHex } from '@/lib/db/connection';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
+import { ThemeToggle } from '@/components/ui/ThemeToggle';
 import { toast } from 'sonner';
 
 function BoardSettingsInner() {
@@ -133,6 +134,7 @@ function BoardSettingsInner() {
           <span className="text-[var(--border-strong)] select-none">/</span>
           <h1 className="text-sm font-medium text-[var(--text)] truncate">{board?.title ?? 'Settings'}</h1>
           <span className="text-[10px] uppercase tracking-wider text-[var(--text-dim)] ml-1">Settings</span>
+          <div className="ml-auto"><ThemeToggle /></div>
         </div>
       </header>
 
