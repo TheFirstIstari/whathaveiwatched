@@ -58,88 +58,88 @@ function DashboardInner() {
   const participantCountForBoard = (boardId: bigint) =>
     allParticipants.filter(p => p.boardId === boardId).length;
 
+  const totalTitles = myBoards.reduce((sum, b) => sum + itemCountForBoard(b.id), 0);
+  const totalMembers = myBoards.reduce((sum, b) => sum + participantCountForBoard(b.id), 0);
+
   return (
     <div className="min-h-screen">
       <ConnectionBanner />
-      <header className="sticky top-0 z-20 border-b border-[var(--border)] bg-[var(--bg)]/85 backdrop-blur-md">
-        <div className="max-w-5xl mx-auto px-6 h-14 flex items-center justify-between">
-          <div className="flex items-center gap-2.5">
-            <span className="w-6 h-6 rounded-xl bg-gradient-to-br from-indigo-500 to-sky-400 shadow-[0_8px_22px_-10px_rgba(99,102,241,0.9)]" aria-hidden />
-            <span className="font-semibold tracking-tight text-[var(--text)]">IHaveWatched</span>
-          </div>
-          <div className="flex items-center gap-1">
-            {displayName && (
-              <span className="hidden sm:inline text-sm text-[var(--text-soft)] mr-2">{displayName}</span>
-            )}
+      <header className="sticky top-0 z-30 border-b border-[var(--border)] bg-[var(--surface)]/75 backdrop-blur-xl">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
+          <button onClick={() => router.push('/')} className="flex items-center gap-3 group">
+            <span className="relative w-9 h-9 rounded-2xl bg-[var(--text)] text-[var(--bg)] flex items-center justify-center shadow-[var(--shadow-md)] overflow-hidden">
+              <span className="absolute inset-0 bg-gradient-to-br from-white/20 to-transparent" />
+              <span className="relative text-sm font-black">I</span>
+            </span>
+            <span className="font-semibold tracking-tight text-[var(--text)] text-sm sm:text-base">IHaveWatched</span>
+          </button>
+          <div className="flex items-center gap-2">
+            {displayName && <span className="hidden md:inline text-sm text-[var(--text-soft)] px-3 py-1.5 rounded-full bg-[var(--surface-2)]">{displayName}</span>}
             <ThemeToggle />
             <Button variant="ghost" size="sm" onClick={() => {
               clearIdentityToken();
               localStorage.removeItem('ihw_display_name');
               router.replace('/signin');
             }}>
-              Change name
+              Switch user
             </Button>
           </div>
         </div>
       </header>
 
-      <main className="max-w-5xl mx-auto px-6 py-10 space-y-12">
-
-        {/* My Boards */}
-        <section>
-          <div className="flex items-end justify-between mb-5">
-            <div>
-              <h2 className="text-base font-semibold text-[var(--text)]">My Boards</h2>
-              <p className="text-xs text-[var(--text-dim)] mt-0.5">Boards you own</p>
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 py-8 sm:py-12">
+        <section className="grid lg:grid-cols-[1fr_22rem] gap-6 mb-8">
+          <div className="ui-card p-6 sm:p-8 overflow-hidden relative">
+            <div className="absolute -right-24 -top-24 w-72 h-72 rounded-full bg-[var(--accent-soft)] blur-3xl" />
+            <div className="relative max-w-2xl">
+              <p className="text-xs font-medium uppercase tracking-[0.18em] text-[var(--accent)] mb-3">Watchparty boards</p>
+              <h1 className="text-3xl sm:text-5xl font-semibold leading-[1.02] text-[var(--text)] mb-4">
+                Track shared watch progress without spreadsheets.
+              </h1>
+              <p className="text-sm sm:text-base text-[var(--text-soft)] leading-7 max-w-xl">
+                Create a board, add movies or shows, invite friends, and see exactly where everyone is in the timeline.
+              </p>
+              <div className="flex flex-wrap gap-3 mt-7">
+                <Button size="lg" onClick={() => router.push('/boards/new')}>Create board</Button>
+                {myBoards[0] && <Button variant="secondary" size="lg" onClick={() => router.push(`/board/${myBoards[0].id}`)}>Open latest</Button>}
+              </div>
             </div>
-            <Button size="sm" onClick={() => router.push('/boards/new')}>
-              <span className="text-[15px] leading-none -mt-px">+</span> New board
-            </Button>
           </div>
 
-          {myBoards.length === 0 ? (
-            <EmptyState
-              title="No boards yet"
-              description="Create your first board to start tracking what you've watched."
-              cta={<Button variant="secondary" onClick={() => router.push('/boards/new')}>Create board</Button>}
-            />
-          ) : (
-            <BoardGrid
-              boards={myBoards}
-              itemCount={itemCountForBoard}
-              participantCount={participantCountForBoard}
-              onOpen={id => router.push(`/board/${id}`)}
-            />
-          )}
+          <div className="grid grid-cols-3 lg:grid-cols-1 gap-3">
+            <StatCard label="Boards" value={myBoards.length} />
+            <StatCard label="Titles" value={totalTitles} />
+            <StatCard label="Members" value={totalMembers} />
+          </div>
         </section>
 
-        {/* Joined Boards */}
-        {joinedBoards.length > 0 && (
-          <section>
-            <div className="mb-5">
-              <h2 className="text-base font-semibold text-[var(--text)]">Joined</h2>
-              <p className="text-xs text-[var(--text-dim)] mt-0.5">Boards you've been invited to</p>
-            </div>
-            <BoardGrid
-              boards={joinedBoards}
-              itemCount={itemCountForBoard}
-              participantCount={participantCountForBoard}
-              onOpen={id => router.push(`/board/${id}`)}
-            />
-          </section>
-        )}
+        <section className="space-y-8">
+          <BoardSection
+            title="Your boards"
+            subtitle="Owned by you"
+            action={<Button size="sm" onClick={() => router.push('/boards/new')}>New board</Button>}
+          >
+            {myBoards.length === 0 ? (
+              <EmptyState
+                title="Create your first board"
+                description="Start with a franchise, movie marathon, or series watchthrough."
+                cta={<Button onClick={() => router.push('/boards/new')}>Create board</Button>}
+              />
+            ) : (
+              <BoardGrid boards={myBoards} itemCount={itemCountForBoard} participantCount={participantCountForBoard} onOpen={id => router.push(`/board/${id}`)} />
+            )}
+          </BoardSection>
 
+          {joinedBoards.length > 0 && (
+            <BoardSection title="Joined boards" subtitle="Shared with you">
+              <BoardGrid boards={joinedBoards} itemCount={itemCountForBoard} participantCount={participantCountForBoard} onOpen={id => router.push(`/board/${id}`)} />
+            </BoardSection>
+          )}
+        </section>
       </main>
-
-      <footer className="border-t border-[var(--border)] mt-12">
-        <div className="max-w-5xl mx-auto px-6 py-5 text-center text-xs text-[var(--text-dim)]">
-          This product uses the TMDB API but is not endorsed or certified by TMDB.
-        </div>
-      </footer>
     </div>
   );
 }
-
 interface BoardRow {
   id: bigint;
   title: string;
@@ -147,18 +147,42 @@ interface BoardRow {
   sharingMode: string;
 }
 
+function StatCard({ label, value }: { label: string; value: number }) {
+  return (
+    <div className="ui-card p-4 sm:p-5">
+      <p className="text-2xl sm:text-3xl font-semibold tabular-nums text-[var(--text)]">{value}</p>
+      <p className="text-[11px] sm:text-xs uppercase tracking-wider text-[var(--text-dim)] mt-1">{label}</p>
+    </div>
+  );
+}
+
+function BoardSection({ title, subtitle, action, children }: { title: string; subtitle: string; action?: React.ReactNode; children: React.ReactNode }) {
+  return (
+    <section>
+      <div className="flex items-center justify-between gap-4 mb-4">
+        <div>
+          <h2 className="text-lg font-semibold text-[var(--text)]">{title}</h2>
+          <p className="text-sm text-[var(--text-soft)] mt-0.5">{subtitle}</p>
+        </div>
+        {action}
+      </div>
+      {children}
+    </section>
+  );
+}
+
 function EmptyState({ title, description, cta }: { title: string; description: string; cta?: React.ReactNode }) {
   return (
-    <div className="ui-card border-dashed flex flex-col items-center justify-center text-center px-6 py-16 gap-3">
-      <div className="w-10 h-10 rounded-full bg-[var(--surface-2)] flex items-center justify-center text-[var(--text-dim)]">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-          <rect x="3" y="3" width="18" height="18" rx="3" />
-          <path d="M12 8v8M8 12h8" />
+    <div className="ui-card min-h-[18rem] flex flex-col items-center justify-center text-center px-6 py-16 gap-5">
+      <div className="w-14 h-14 rounded-3xl bg-[var(--accent-soft)] flex items-center justify-center text-[var(--accent)]">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M4 5a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2z" />
+          <path d="M9 9h6M9 13h6M9 17h3" />
         </svg>
       </div>
       <div>
-        <p className="text-sm font-medium text-[var(--text)]">{title}</p>
-        <p className="text-xs text-[var(--text-soft)] mt-1">{description}</p>
+        <p className="text-base font-semibold text-[var(--text)]">{title}</p>
+        <p className="text-sm text-[var(--text-soft)] mt-1 max-w-sm">{description}</p>
       </div>
       {cta}
     </div>
