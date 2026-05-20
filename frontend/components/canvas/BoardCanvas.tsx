@@ -11,6 +11,8 @@ import { ContextMenu, ContextMenuItem } from './ContextMenu';
 import { DrillDownDrawer } from './DrillDownDrawer';
 import { ThemeTokens } from '@/lib/theme';
 
+export type FitViewFn = () => void;
+
 export interface BoardMediaItem {
   id: bigint;
   mediaType: string;
@@ -49,15 +51,20 @@ interface Props {
   watchEntries: WatchEntryData[];
   watchAggs: WatchAggData[];
   myIdentityHex: string | null;
+  isOwner: boolean;
   isOwnerOrParticipant: boolean;
   theme: ThemeTokens;
   onSetWatch: (mediaItemId: bigint, watched: boolean) => void;
   onSetWatchBulk: (ids: bigint[], watched: boolean) => void;
+  onRemoveItem?: (mediaItemId: bigint) => void;
+  onScaleChange?: (scale: number) => void;
+  fitViewRef?: React.MutableRefObject<FitViewFn | null>;
 }
 
 export function BoardCanvas({
   boardId, items, participants, watchEntries, watchAggs,
-  myIdentityHex, isOwnerOrParticipant, theme, onSetWatch, onSetWatchBulk,
+  myIdentityHex, isOwner, isOwnerOrParticipant, theme,
+  onSetWatch, onSetWatchBulk, onRemoveItem, onScaleChange, fitViewRef,
 }: Props) {
   const stageRef = useRef<Konva.Stage>(null);
   const { x, y, scale, setCam } = useCanvasCamera();
@@ -77,6 +84,11 @@ export function BoardCanvas({
     window.addEventListener('resize', update);
     return () => window.removeEventListener('resize', update);
   }, []);
+
+  // Notify parent of scale changes
+  useEffect(() => {
+    onScaleChange?.(scale);
+  }, [scale, onScaleChange]);
 
   // Build watch index
   const watchIdx = useMemo(() => {
@@ -99,6 +111,31 @@ export function BoardCanvas({
       parentId: i.parentId, laneIndex: i.laneIndex,
     })), scale),
   [items, scale]);
+
+  // Fit to view function
+  const fitView = useCallback(() => {
+    if (!nodeLayouts.length) return;
+    const pad = 60;
+    const minX = Math.min(...nodeLayouts.map(n => n.x));
+    const minY = Math.min(...nodeLayouts.map(n => n.y));
+    const maxX = Math.max(...nodeLayouts.map(n => n.x + n.width));
+    const maxY = Math.max(...nodeLayouts.map(n => n.y + n.height));
+    const s = Math.min(
+      (windowSize.width  - pad * 2) / (maxX - minX || 1),
+      (windowSize.height - pad * 2) / (maxY - minY || 1),
+      2.0
+    );
+    setCam({
+      x: windowSize.width  / 2 - ((minX + maxX) / 2) * s,
+      y: windowSize.height / 2 - ((minY + maxY) / 2) * s,
+      scale: s,
+    });
+  }, [nodeLayouts, windowSize, setCam]);
+
+  // Expose fitView to parent
+  useEffect(() => {
+    if (fitViewRef) fitViewRef.current = fitView;
+  }, [fitView, fitViewRef]);
 
   const getItemWatchState = useCallback((itemId: bigint) => {
     if (!myIdentityHex) return 'UNWATCHED' as const;
@@ -156,23 +193,8 @@ export function BoardCanvas({
   // Double-click to fit
   const handleDblClick = useCallback((e: Konva.KonvaEventObject<MouseEvent>) => {
     if (e.target !== stageRef.current) return;
-    if (!nodeLayouts.length) return;
-    const pad = 40;
-    const minX = Math.min(...nodeLayouts.map(n => n.x));
-    const minY = Math.min(...nodeLayouts.map(n => n.y));
-    const maxX = Math.max(...nodeLayouts.map(n => n.x + n.width));
-    const maxY = Math.max(...nodeLayouts.map(n => n.y + n.height));
-    const s = Math.min(
-      (windowSize.width  - pad * 2) / (maxX - minX || 1),
-      (windowSize.height - pad * 2) / (maxY - minY || 1),
-      2.0
-    );
-    setCam({
-      x: windowSize.width  / 2 - ((minX + maxX) / 2) * s,
-      y: windowSize.height / 2 - ((minY + maxY) / 2) * s,
-      scale: s,
-    });
-  }, [nodeLayouts, windowSize, setCam]);
+    fitView();
+  }, [fitView]);
 
   const handleNodeClick = useCallback((id: bigint) => {
     const item = items.find(i => i.id === id);
@@ -194,29 +216,39 @@ export function BoardCanvas({
   }, [items, x, y]);
 
   const buildContextItems = useCallback((): ContextMenuItem[] => {
-    if (!contextMenu.nodeId || !isOwnerOrParticipant) return [];
+    if (!contextMenu.nodeId) return [];
     const nodeId = contextMenu.nodeId;
-    const menuItems: ContextMenuItem[] = [
-      { label: 'Mark watched',    action: () => onSetWatch(nodeId, true) },
-      { label: 'Mark unwatched',  action: () => onSetWatch(nodeId, false) },
-      {
-        label: 'Mark all up to here',
-        action: () => {
-          const clicked = items.find(i => i.id === nodeId);
-          if (!clicked) return;
-          const ids = nodeLayouts
-            .filter(n => {
-              const item = items.find(i => i.id === n.id);
-              return item && item.chronoOrder <= clicked.chronoOrder;
-            })
-            .map(n => n.id);
-          onSetWatchBulk(ids, true);
-        }
-      },
-      { label: 'Show details',    action: () => { setDrawerNodeId(nodeId); setDrawerOpen(true); } },
-    ];
+    const menuItems: ContextMenuItem[] = [];
+
+    if (isOwnerOrParticipant) {
+      menuItems.push(
+        { label: 'Mark watched',    action: () => onSetWatch(nodeId, true) },
+        { label: 'Mark unwatched',  action: () => onSetWatch(nodeId, false) },
+        {
+          label: 'Mark all up to here',
+          action: () => {
+            const clicked = items.find(i => i.id === nodeId);
+            if (!clicked) return;
+            const ids = nodeLayouts
+              .filter(n => {
+                const item = items.find(i => i.id === n.id);
+                return item && item.chronoOrder <= clicked.chronoOrder;
+              })
+              .map(n => n.id);
+            onSetWatchBulk(ids, true);
+          }
+        },
+      );
+    }
+
+    menuItems.push({ label: 'Show details', action: () => { setDrawerNodeId(nodeId); setDrawerOpen(true); } });
+
+    if (isOwner && onRemoveItem) {
+      menuItems.push({ label: 'Remove from board', action: () => onRemoveItem(nodeId) });
+    }
+
     return menuItems;
-  }, [contextMenu.nodeId, isOwnerOrParticipant, items, nodeLayouts, onSetWatch, onSetWatchBulk]);
+  }, [contextMenu.nodeId, isOwner, isOwnerOrParticipant, items, nodeLayouts, onSetWatch, onSetWatchBulk, onRemoveItem]);
 
   const getSubtitle = (item: BoardMediaItem) => {
     if (item.subtitle) return item.subtitle;
@@ -307,6 +339,7 @@ export function BoardCanvas({
         myIdentityHex={myIdentityHex}
         isOwnerOrParticipant={isOwnerOrParticipant}
         onSetWatch={onSetWatch}
+        onSetWatchBulk={onSetWatchBulk}
       />
     </>
   );

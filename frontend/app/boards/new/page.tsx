@@ -4,9 +4,9 @@ export const dynamic = 'force-dynamic';
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { useTable, useReducer } from 'spacetimedb/react';
-import { tables, reducers } from '@/src/module_bindings';
-import { getDisplayName, getIdentityHex } from '@/lib/db/connection';
+import { useReducer } from 'spacetimedb/react';
+import { reducers } from '@/src/module_bindings';
+import { getDisplayName } from '@/lib/db/connection';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { toast } from 'sonner';
@@ -15,7 +15,6 @@ function NewBoardPageInner() {
   const router = useRouter();
   const [title, setTitle]           = useState('');
   const [description, setDescription] = useState('');
-  const [sharingMode, setSharingMode] = useState<'PRIVATE' | 'PUBLIC'>('PRIVATE');
   const [error, setError]           = useState('');
   const [loading, setLoading]       = useState(false);
 
@@ -72,23 +71,9 @@ function NewBoardPageInner() {
                          border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
             />
           </label>
-          <fieldset className="space-y-2">
-            <legend className="text-sm font-medium text-gray-700 dark:text-gray-300">Sharing</legend>
-            {(['PRIVATE', 'PUBLIC'] as const).map(mode => (
-              <label key={mode} className="flex items-center gap-2 cursor-pointer">
-                <input
-                  type="radio"
-                  name="sharing"
-                  value={mode}
-                  checked={sharingMode === mode}
-                  onChange={() => setSharingMode(mode)}
-                />
-                <span className="text-sm text-gray-700 dark:text-gray-300">
-                  {mode === 'PRIVATE' ? 'Private — invite link only' : 'Public — anyone with link can view'}
-                </span>
-              </label>
-            ))}
-          </fieldset>
+          <p className="text-xs text-gray-400 dark:text-gray-500">
+            Boards start private. You can change sharing &amp; invite settings after creation.
+          </p>
           <div className="flex gap-3 pt-2">
             <Button type="button" variant="secondary" onClick={() => router.back()} className="flex-1">
               Cancel

@@ -2,18 +2,19 @@
 
 export const dynamic = 'force-dynamic';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter, useParams, useSearchParams } from 'next/navigation';
 import { useTable, useReducer } from 'spacetimedb/react';
 import { tables, reducers } from '@/src/module_bindings';
 import { getDisplayName, getIdentityHex, getParticipantState } from '@/lib/db/connection';
 import { ConnectionBanner } from '@/components/ui/ConnectionBanner';
 import { Button } from '@/components/ui/Button';
-import { BoardCanvas, type BoardMediaItem, type BoardParticipant, type WatchEntryData, type WatchAggData } from '@/components/canvas/BoardCanvas';
+import { BoardCanvas, type BoardMediaItem, type BoardParticipant, type WatchEntryData, type WatchAggData, type FitViewFn } from '@/components/canvas/BoardCanvas';
 import { AddMediaSearch } from '@/components/board/AddMediaSearch';
 import { importMedia } from '@/lib/db/importMedia';
 import { useTheme } from '@/app/providers';
 import { useSpacetimeDB } from 'spacetimedb/react';
+import { getZoomLevel } from '@/lib/canvas/layout';
 import { toast } from 'sonner';
 
 function BoardPageInner() {
@@ -28,6 +29,8 @@ function BoardPageInner() {
   const [identityHex, setIdentityHex_] = useState<string | null>(null);
   const [authMode, setAuthMode]         = useState<'owner' | 'participant' | 'public' | null>(null);
   const [mounted, setMounted]           = useState(false);
+  const [canvasScale, setCanvasScale]   = useState(1);
+  const fitViewRef = useRef<FitViewFn | null>(null);
 
   useEffect(() => {
     setMounted(true);
@@ -71,8 +74,9 @@ function BoardPageInner() {
   }, [board, identityHex, participants, boardId, router]);
 
   // Reducers
-  const setWatch      = useReducer(reducers.setWatch);
-  const setWatchBulk  = useReducer(reducers.setWatchBulk);
+  const setWatch        = useReducer(reducers.setWatch);
+  const setWatchBulk    = useReducer(reducers.setWatchBulk);
+  const removeMediaItem = useReducer(reducers.removeMediaItem);
 
   // Board-scoped data
   const boardItems = useMemo(
@@ -170,20 +174,41 @@ function BoardPageInner() {
     await importMedia(conn, boardId, tmdbId, mediaType as 'MOVIE' | 'TV_SHOW');
   };
 
+  const handleRemoveItem = useCallback(async (mediaItemId: bigint) => {
+    try {
+      await removeMediaItem({ boardId, mediaItemId });
+      toast.success('Removed from board');
+    } catch (err: any) {
+      toast.error(err?.message ?? 'Failed to remove item');
+    }
+  }, [removeMediaItem, boardId]);
+
+  const zoomLabel = getZoomLevel(canvasScale);
+
   if (!mounted || !authMode) return null;
 
   return (
     <div className="h-screen flex flex-col overflow-hidden" style={{ background: theme['card.bg'] }}>
       <ConnectionBanner />
-      <header className="border-b bg-white dark:bg-gray-900 px-4 py-3 flex items-center justify-between z-10 shrink-0">
-        <div className="flex items-center gap-3">
+      <header className="border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 px-4 py-3 flex items-center justify-between z-10 shrink-0">
+        <div className="flex items-center gap-3 min-w-0">
           <Button variant="ghost" size="sm" onClick={() => router.push('/')}>← Boards</Button>
-          <span className="text-gray-300 dark:text-gray-600">|</span>
+          <span className="text-gray-200 dark:text-gray-700 select-none">|</span>
           <h1 className="font-semibold text-gray-900 dark:text-white truncate max-w-[180px]">
             {board?.title ?? `Board ${boardId}`}
           </h1>
+          {/* Zoom level pill */}
+          <span className="hidden sm:inline-flex text-xs px-2 py-0.5 rounded-full bg-gray-100 dark:bg-gray-800 text-gray-400 dark:text-gray-500 font-mono select-none">
+            {zoomLabel}
+          </span>
         </div>
         <div className="flex items-center gap-2">
+          {/* Fit to view */}
+          {canvasItems.length > 0 && (
+            <Button variant="ghost" size="sm" title="Fit all to view" onClick={() => fitViewRef.current?.()}>
+              ⊡
+            </Button>
+          )}
           {authMode === 'owner' && (
             <>
               <AddMediaSearch
@@ -221,10 +246,14 @@ function BoardPageInner() {
             watchEntries={canvasWatchEntries}
             watchAggs={canvasWatchAggs}
             myIdentityHex={identityHex}
+            isOwner={authMode === 'owner'}
             isOwnerOrParticipant={authMode === 'owner' || authMode === 'participant'}
             theme={theme}
             onSetWatch={handleSetWatch}
             onSetWatchBulk={handleSetWatchBulk}
+            onRemoveItem={authMode === 'owner' ? handleRemoveItem : undefined}
+            onScaleChange={setCanvasScale}
+            fitViewRef={fitViewRef}
           />
         )}
       </main>

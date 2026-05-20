@@ -26,6 +26,22 @@ export interface NodeCardProps {
   onHideTooltip: () => void;
 }
 
+const TYPE_LABELS: Record<string, string> = {
+  FILM:    'Film',
+  SHOW:    'Show',
+  SEASON:  'Season',
+  ARC:     'Arc',
+  EPISODE: 'Ep.',
+};
+
+const TYPE_COLORS: Record<string, string> = {
+  FILM:    '#6366F1',  // indigo
+  SHOW:    '#0EA5E9',  // sky
+  SEASON:  '#8B5CF6',  // violet
+  ARC:     '#EC4899',  // pink
+  EPISODE: '#64748B',  // slate
+};
+
 export function NodeCard({
   id, mediaType, title, subtitle, posterUrl,
   participants, watchState, x, y, theme, isOwnerOrParticipant, scale,
@@ -42,6 +58,9 @@ export function NodeCard({
   const watchColor = watchState === 'WATCHED' ? theme['chip.watched']
                    : watchState === 'PARTIAL' ? theme['chip.partial']
                    : theme['chip.unwatched'];
+
+  const typeColor = TYPE_COLORS[mediaType] ?? '#94A3B8';
+  const typeLabel = TYPE_LABELS[mediaType] ?? mediaType;
 
   const handleMouseEnter = (e: Konva.KonvaEventObject<MouseEvent>) => {
     nodeRef.current?.to({ scaleX: 1.04, scaleY: 1.04, duration: 0.08 });
@@ -70,6 +89,11 @@ export function NodeCard({
     onRightClick(id, pos);
   };
 
+  // Watched badge at top-right
+  const badgeSize = 18;
+  const badgeX = w - badgeSize - 6;
+  const badgeY = 8;
+
   return (
     <Group
       ref={nodeRef}
@@ -86,8 +110,8 @@ export function NodeCard({
         width={w}
         height={h}
         fill={theme['card.bg']}
-        stroke={theme['card.border']}
-        strokeWidth={1}
+        stroke={watchState === 'WATCHED' ? theme['chip.watched'] : theme['card.border']}
+        strokeWidth={watchState === 'WATCHED' ? 2 : 1}
         cornerRadius={cornerR}
         shadowColor={theme['card.shadow']}
         shadowBlur={8}
@@ -121,6 +145,55 @@ export function NodeCard({
           cornerRadius={[cornerR - 2, cornerR - 2, 0, 0]}
           listening={false}
         />
+      )}
+
+      {/* Type badge (top-left on poster) */}
+      {scale >= 0.4 && (
+        <>
+          <Rect
+            x={6}
+            y={10}
+            width={typeLabel.length * 6 + 10}
+            height={16}
+            fill={typeColor}
+            opacity={0.9}
+            cornerRadius={4}
+            listening={false}
+          />
+          <Text
+            text={typeLabel}
+            x={11}
+            y={14}
+            fontSize={9}
+            fontStyle="bold"
+            fill="#FFFFFF"
+            listening={false}
+          />
+        </>
+      )}
+
+      {/* Watched checkmark badge (top-right) */}
+      {watchState === 'WATCHED' && scale >= 0.5 && (
+        <>
+          <Rect
+            x={badgeX}
+            y={badgeY}
+            width={badgeSize}
+            height={badgeSize}
+            fill={theme['chip.watched']}
+            cornerRadius={badgeSize / 2}
+            listening={false}
+          />
+          <Text
+            text="✓"
+            x={badgeX + 3}
+            y={badgeY + 3}
+            fontSize={11}
+            fill="#FFFFFF"
+            fontStyle="bold"
+            listening={false}
+          />
+        </>
       )}
 
       {/* Title */}
@@ -160,14 +233,13 @@ export function NodeCard({
         />
       )}
 
-      {/* Partial striped overlay */}
+      {/* Partial progress bar at bottom */}
       {watchState === 'PARTIAL' && (
         <Rect
           width={w}
-          height={4}
-          y={h - 4}
+          height={3}
+          y={h - 3}
           fill={theme['chip.partial']}
-          opacity={0.4}
           cornerRadius={[0, 0, cornerR, cornerR]}
           listening={false}
         />
