@@ -38,10 +38,10 @@ function JoinBoardPageInner() {
 
   if (!inviteToken) {
     return (
-      <div className="flex min-h-screen items-center justify-center">
-        <div className="text-center space-y-3">
-          <h1 className="text-xl font-bold text-red-500">Invalid invite link</h1>
-          <p className="text-gray-500 text-sm">This link is missing an invite token.</p>
+      <div className="flex min-h-screen items-center justify-center p-4">
+        <div className="ui-card p-8 text-center max-w-sm space-y-2">
+          <h1 className="text-base font-semibold text-[var(--danger)]">Invalid invite link</h1>
+          <p className="text-sm text-[var(--text-soft)]">This link is missing an invite token.</p>
         </div>
       </div>
     );
@@ -70,16 +70,16 @@ function JoinBoardPageInner() {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gray-50 dark:bg-gray-950 p-4">
-      <div className="w-full max-w-sm bg-white dark:bg-gray-900 rounded-2xl p-8 shadow-lg space-y-6">
+    <div className="flex min-h-screen items-center justify-center p-4">
+      <div className="w-full max-w-sm ui-card p-8 space-y-6">
         {reason === 'session_expired' && (
-          <p className="text-sm text-amber-600 bg-amber-50 dark:bg-amber-900/20 rounded-lg p-3">
+          <p className="text-xs text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-900/30 rounded-md px-3 py-2">
             Your session expired. Please rejoin to continue tracking.
           </p>
         )}
         <div className="text-center">
-          <h1 className="text-xl font-bold text-gray-900 dark:text-white">Join Board</h1>
-          <p className="text-sm text-gray-500 mt-1">Choose a display name to track your watches</p>
+          <h1 className="text-lg font-semibold tracking-tight text-[var(--text)]">Join board</h1>
+          <p className="text-sm text-[var(--text-soft)] mt-1">Pick a display name to track your watches.</p>
         </div>
         <form onSubmit={handleJoin} className="space-y-4">
           <Input
@@ -92,11 +92,11 @@ function JoinBoardPageInner() {
             autoFocus
           />
           <Button type="submit" disabled={loading} className="w-full">
-            {loading ? 'Joining…' : 'Join Board'}
+            {loading ? 'Joining…' : 'Join board'}
           </Button>
         </form>
-        <p className="text-xs text-center text-gray-400">
-          No account needed. Your watch state is saved to this device.
+        <p className="text-xs text-center text-[var(--text-dim)] leading-relaxed">
+          No account needed.<br/>Your watch state is saved to this device.
         </p>
       </div>
     </div>
@@ -106,6 +106,6 @@ function JoinBoardPageInner() {
 export default function JoinBoardPage() {
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
-  if (!mounted) return <div className="flex min-h-screen items-center justify-center bg-gray-50 dark:bg-gray-950"><p className="text-gray-400 text-sm">Loading…</p></div>;
+  if (!mounted) return <div className="flex min-h-screen items-center justify-center"><p className="text-[var(--text-dim)] text-sm">Loading…</p></div>;
   return <JoinBoardPageInner />;
 }

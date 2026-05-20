@@ -4,71 +4,119 @@
 
 @layer base {
   :root {
-    --background: #f9fafb;
+    --bg:            #fafafa;
+    --surface:       #ffffff;
+    --surface-2:     #f4f4f5;
+    --surface-hover: #f4f4f5;
+    --border:        #e4e4e7;
+    --border-strong: #d4d4d8;
+    --text:          #18181b;
+    --text-muted:    #52525b;
+    --text-soft:     #71717a;
+    --text-dim:      #a1a1aa;
+    --accent:        #4f46e5;        /* indigo-600 */
+    --accent-hover:  #4338ca;
+    --accent-soft:   #eef2ff;
+    --accent-fg:     #ffffff;
+    --danger:        #dc2626;
+    --danger-soft:   #fef2f2;
+    --success:       #10b981;
+    --ring:          rgba(79, 70, 229, 0.45);
     color-scheme: light;
   }
 
   .dark {
-    --background: #0f0f17;
+    --bg:            #0a0a0a;
+    --surface:       #111114;
+    --surface-2:     #17171b;
+    --surface-hover: #1c1c21;
+    --border:        rgba(255, 255, 255, 0.07);
+    --border-strong: rgba(255, 255, 255, 0.12);
+    --text:          #fafafa;
+    --text-muted:    #d4d4d8;
+    --text-soft:     #a1a1aa;
+    --text-dim:      #71717a;
+    --accent:        #818cf8;        /* indigo-400 */
+    --accent-hover:  #a5b4fc;
+    --accent-soft:   rgba(99, 102, 241, 0.16);
+    --accent-fg:     #0a0a0a;
+    --danger:        #f87171;
+    --danger-soft:   rgba(239, 68, 68, 0.12);
+    --success:       #34d399;
+    --ring:          rgba(129, 140, 248, 0.55);
     color-scheme: dark;
   }
 
-  *,
-  *::before,
-  *::after {
-    box-sizing: border-box;
-  }
+  *, *::before, *::after { box-sizing: border-box; }
 
-  html {
-    /* Prevent layout shift from scrollbar appearing */
-    scrollbar-gutter: stable;
-  }
+  html { scrollbar-gutter: stable; }
 
   body {
-    background-color: var(--background);
-    /* Smooth font rendering */
+    background: var(--bg);
+    color: var(--text);
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     text-rendering: optimizeLegibility;
-    /* Prevent text size adjustment on orientation change */
     -webkit-text-size-adjust: 100%;
+    font-feature-settings: 'cv11', 'ss01';
+    letter-spacing: -0.005em;
   }
 
-  /* Consistent focus ring */
+  ::selection { background: var(--accent-soft); color: var(--text); }
+
   :focus-visible {
-    outline: 2px solid #3b82f6;
+    outline: 2px solid var(--accent);
     outline-offset: 2px;
+    border-radius: 4px;
   }
+  :focus:not(:focus-visible) { outline: none; }
 
-  /* Remove default focus for mouse users */
-  :focus:not(:focus-visible) {
-    outline: none;
-  }
+  * { -webkit-tap-highlight-color: transparent; }
 
-  /* Tame default tap highlight on mobile */
-  * {
-    -webkit-tap-highlight-color: transparent;
-  }
-
-  /* Scrollbar — thin and styled */
-  ::-webkit-scrollbar {
-    width: 6px;
-    height: 6px;
-  }
-  ::-webkit-scrollbar-track {
-    background: transparent;
-  }
+  ::-webkit-scrollbar { width: 10px; height: 10px; }
+  ::-webkit-scrollbar-track { background: transparent; }
   ::-webkit-scrollbar-thumb {
-    background: #d1d5db;
-    border-radius: 3px;
-  }
-  .dark ::-webkit-scrollbar-thumb {
-    background: #374151;
+    background: var(--border-strong);
+    border-radius: 999px;
+    border: 3px solid transparent;
+    background-clip: padding-box;
   }
   ::-webkit-scrollbar-thumb:hover {
-    background: #9ca3af;
+    background: var(--text-dim);
+    background-clip: padding-box;
+    border: 3px solid transparent;
   }
-  .dark ::-webkit-scrollbar-thumb:hover {
-    background: #4b5563;
+
+  h1, h2, h3 { letter-spacing: -0.02em; }
+}
+
+@layer components {
+  /* Card / panel surface */
+  .ui-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
   }
+
+  /* Subtle interactive row (hover) */
+  .ui-row-hover:hover { background: var(--surface-hover); }
+
+  /* Form input baseline */
+  .ui-input {
+    width: 100%;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    color: var(--text);
+    border-radius: 8px;
+    padding: 0.5rem 0.75rem;
+    font-size: 0.875rem;
+    line-height: 1.4;
+    transition: border-color .12s ease, box-shadow .12s ease, background .12s ease;
+  }
+  .ui-input::placeholder { color: var(--text-dim); }
+  .ui-input:hover { border-color: var(--border-strong); }
+  .ui-input:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--ring); }
+
+  /* Subtle hairline divider */
+  .ui-divider { border-color: var(--border); }
 }

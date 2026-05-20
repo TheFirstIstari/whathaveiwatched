@@ -9,7 +9,6 @@ import { tables, reducers } from '@/src/module_bindings';
 import { getDisplayName, getIdentityHex, clearIdentityToken } from '@/lib/db/connection';
 import { Button } from '@/components/ui/Button';
 import { ConnectionBanner } from '@/components/ui/ConnectionBanner';
-import { toast } from 'sonner';
 
 // Inner component — only rendered after client mount, so SpacetimeDB hooks are safe
 function DashboardInner() {
@@ -24,10 +23,10 @@ function DashboardInner() {
     setIdentityHex_(getIdentityHex());
   }, [router]);
 
-  const [allBoards]      = useTable(tables.board);
+  const [allBoards]       = useTable(tables.board);
   const [allParticipants] = useTable(tables.participant);
   const [allMediaItems]   = useTable(tables.media_item);
-  const registerOwner    = useReducer(reducers.registerOwner);
+  const registerOwner     = useReducer(reducers.registerOwner);
 
   useEffect(() => {
     if (!identityHex || !displayName) return;
@@ -39,7 +38,6 @@ function DashboardInner() {
     [allBoards, identityHex]
   );
 
-  // Boards the user has joined as a participant (not owner)
   const joinedBoardIds = useMemo(
     () => new Set(
       allParticipants
@@ -53,7 +51,6 @@ function DashboardInner() {
     [allBoards, joinedBoardIds]
   );
 
-  // Helpers for card stats
   const itemCountForBoard = (boardId: bigint) =>
     allMediaItems.filter(m => m.boardId === boardId && (m.mediaType === 'FILM' || m.mediaType === 'SHOW')).length;
 
@@ -61,40 +58,49 @@ function DashboardInner() {
     allParticipants.filter(p => p.boardId === boardId).length;
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-950">
+    <div className="min-h-screen">
       <ConnectionBanner />
-      <header className="border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 px-6 py-4 flex items-center justify-between">
-        <span className="text-lg font-bold tracking-tight text-gray-900 dark:text-white">IHaveWatched</span>
-        <div className="flex items-center gap-3">
-          {displayName && (
-            <span className="text-sm text-gray-500 dark:text-gray-400">{displayName}</span>
-          )}
-          <Button variant="ghost" size="sm" onClick={() => {
-            clearIdentityToken();
-            localStorage.removeItem('ihw_display_name');
-            router.replace('/signin');
-          }}>
-            Change name
-          </Button>
+      <header className="sticky top-0 z-20 border-b border-[var(--border)] bg-[var(--bg)]/85 backdrop-blur-md">
+        <div className="max-w-5xl mx-auto px-6 h-14 flex items-center justify-between">
+          <div className="flex items-center gap-2.5">
+            <span className="w-6 h-6 rounded-md bg-gradient-to-br from-indigo-500 to-violet-500" aria-hidden />
+            <span className="font-semibold tracking-tight text-[var(--text)]">IHaveWatched</span>
+          </div>
+          <div className="flex items-center gap-2">
+            {displayName && (
+              <span className="hidden sm:inline text-sm text-[var(--text-soft)]">{displayName}</span>
+            )}
+            <Button variant="ghost" size="sm" onClick={() => {
+              clearIdentityToken();
+              localStorage.removeItem('ihw_display_name');
+              router.replace('/signin');
+            }}>
+              Change name
+            </Button>
+          </div>
         </div>
       </header>
 
-      <main className="max-w-4xl mx-auto px-6 py-10 space-y-12">
+      <main className="max-w-5xl mx-auto px-6 py-10 space-y-12">
 
         {/* My Boards */}
         <section>
-          <div className="flex items-center justify-between mb-5">
-            <h2 className="text-xl font-bold text-gray-900 dark:text-white">My Boards</h2>
-            <Button size="sm" onClick={() => router.push('/boards/new')}>+ New Board</Button>
+          <div className="flex items-end justify-between mb-5">
+            <div>
+              <h2 className="text-base font-semibold text-[var(--text)]">My Boards</h2>
+              <p className="text-xs text-[var(--text-dim)] mt-0.5">Boards you own</p>
+            </div>
+            <Button size="sm" onClick={() => router.push('/boards/new')}>
+              <span className="text-[15px] leading-none -mt-px">+</span> New board
+            </Button>
           </div>
 
           {myBoards.length === 0 ? (
-            <div className="rounded-2xl border-2 border-dashed border-gray-200 dark:border-gray-800 p-14 text-center">
-              <p className="text-gray-400 text-sm mb-4">No boards yet — create one to get started.</p>
-              <Button variant="secondary" onClick={() => router.push('/boards/new')}>
-                Create your first board
-              </Button>
-            </div>
+            <EmptyState
+              title="No boards yet"
+              description="Create your first board to start tracking what you've watched."
+              cta={<Button variant="secondary" onClick={() => router.push('/boards/new')}>Create board</Button>}
+            />
           ) : (
             <BoardGrid
               boards={myBoards}
@@ -108,21 +114,25 @@ function DashboardInner() {
         {/* Joined Boards */}
         {joinedBoards.length > 0 && (
           <section>
-            <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-5">Joined Boards</h2>
+            <div className="mb-5">
+              <h2 className="text-base font-semibold text-[var(--text)]">Joined</h2>
+              <p className="text-xs text-[var(--text-dim)] mt-0.5">Boards you've been invited to</p>
+            </div>
             <BoardGrid
               boards={joinedBoards}
               itemCount={itemCountForBoard}
               participantCount={participantCountForBoard}
               onOpen={id => router.push(`/board/${id}`)}
-              dimOwner
             />
           </section>
         )}
 
       </main>
 
-      <footer className="text-center text-xs text-gray-400 py-6 border-t border-gray-100 dark:border-gray-800">
-        This product uses the TMDB API but is not endorsed or certified by TMDB.
+      <footer className="border-t border-[var(--border)] mt-12">
+        <div className="max-w-5xl mx-auto px-6 py-5 text-center text-xs text-[var(--text-dim)]">
+          This product uses the TMDB API but is not endorsed or certified by TMDB.
+        </div>
       </footer>
     </div>
   );
@@ -135,55 +145,75 @@ interface BoardRow {
   sharingMode: string;
 }
 
+function EmptyState({ title, description, cta }: { title: string; description: string; cta?: React.ReactNode }) {
+  return (
+    <div className="ui-card border-dashed flex flex-col items-center justify-center text-center px-6 py-16 gap-3">
+      <div className="w-10 h-10 rounded-full bg-[var(--surface-2)] flex items-center justify-center text-[var(--text-dim)]">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+          <rect x="3" y="3" width="18" height="18" rx="3" />
+          <path d="M12 8v8M8 12h8" />
+        </svg>
+      </div>
+      <div>
+        <p className="text-sm font-medium text-[var(--text)]">{title}</p>
+        <p className="text-xs text-[var(--text-soft)] mt-1">{description}</p>
+      </div>
+      {cta}
+    </div>
+  );
+}
+
 function BoardGrid({
-  boards, itemCount, participantCount, onOpen, dimOwner = false,
+  boards, itemCount, participantCount, onOpen,
 }: {
   boards: BoardRow[];
   itemCount: (id: bigint) => number;
   participantCount: (id: bigint) => number;
   onOpen: (id: bigint) => void;
-  dimOwner?: boolean;
 }) {
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
       {boards.map(board => {
         const items = itemCount(board.id);
         const parts = participantCount(board.id);
+        const isPublic = board.sharingMode === 'PUBLIC';
         return (
           <button
             key={String(board.id)}
             onClick={() => onOpen(board.id)}
-            className="text-left rounded-2xl border bg-white dark:bg-gray-900
-                       border-gray-200 dark:border-gray-800
-                       p-5 hover:border-blue-400 dark:hover:border-blue-500
-                       hover:shadow-md transition-all duration-150 group"
+            className="ui-card group text-left p-4 transition-all duration-150
+                       hover:border-[var(--border-strong)] hover:-translate-y-px
+                       hover:shadow-[0_2px_8px_-2px_rgba(0,0,0,0.06)]
+                       dark:hover:shadow-[0_2px_12px_-2px_rgba(0,0,0,0.5)]"
           >
-            <div className="flex items-start justify-between gap-2 mb-2">
-              <h3 className="font-semibold text-gray-900 dark:text-white truncate group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
+            <div className="flex items-start justify-between gap-2 mb-1.5">
+              <h3 className="font-medium text-[var(--text)] truncate text-sm leading-snug">
                 {board.title}
               </h3>
-              <span className={`shrink-0 text-xs px-2 py-0.5 rounded-full font-medium
-                                ${board.sharingMode === 'PUBLIC'
-                                  ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400'
-                                  : 'bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400'}`}>
-                {board.sharingMode === 'PUBLIC' ? 'Public' : 'Private'}
+              <span className={`shrink-0 text-[10px] uppercase tracking-wider font-medium px-1.5 py-0.5 rounded
+                                ${isPublic
+                                  ? 'bg-[var(--accent-soft)] text-[var(--accent)]'
+                                  : 'bg-[var(--surface-2)] text-[var(--text-dim)]'}`}>
+                {isPublic ? 'Public' : 'Private'}
               </span>
             </div>
-            {board.description && (
-              <p className="text-sm text-gray-500 dark:text-gray-400 line-clamp-2 mb-3">
+            {board.description ? (
+              <p className="text-xs text-[var(--text-soft)] line-clamp-2 mb-3 min-h-[2rem]">
                 {board.description}
               </p>
+            ) : (
+              <p className="text-xs text-[var(--text-dim)] italic mb-3 min-h-[2rem]">No description</p>
             )}
-            <div className="flex items-center gap-3 text-xs text-gray-400 dark:text-gray-500">
-              {items > 0 && (
-                <span>{items} {items === 1 ? 'title' : 'titles'}</span>
-              )}
-              {parts > 0 && (
-                <span>{parts} {parts === 1 ? 'participant' : 'participants'}</span>
-              )}
-              {items === 0 && parts === 0 && (
-                <span>Empty</span>
-              )}
+            <div className="flex items-center gap-3 text-[11px] text-[var(--text-dim)] pt-2 border-t border-[var(--border)]">
+              <span className="inline-flex items-center gap-1">
+                <span className="text-[var(--text-soft)] font-medium tabular-nums">{items}</span>
+                <span>{items === 1 ? 'title' : 'titles'}</span>
+              </span>
+              <span className="opacity-50">·</span>
+              <span className="inline-flex items-center gap-1">
+                <span className="text-[var(--text-soft)] font-medium tabular-nums">{parts}</span>
+                <span>{parts === 1 ? 'member' : 'members'}</span>
+              </span>
             </div>
           </button>
         );
@@ -199,18 +229,17 @@ export default function DashboardPage() {
 
   if (!mounted) {
     return (
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-950">
-        <header className="border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 px-6 py-4">
-          <div className="h-6 w-36 bg-gray-200 dark:bg-gray-700 rounded animate-pulse" />
+      <div className="min-h-screen">
+        <header className="border-b border-[var(--border)] h-14 flex items-center">
+          <div className="max-w-5xl mx-auto px-6 w-full">
+            <div className="h-5 w-32 bg-[var(--surface-2)] rounded animate-pulse" />
+          </div>
         </header>
-        <main className="max-w-4xl mx-auto px-6 py-10">
-          <div className="h-7 w-36 bg-gray-200 dark:bg-gray-700 rounded animate-pulse mb-6" />
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {[1, 2].map(i => (
-              <div key={i} className="rounded-2xl border border-gray-200 dark:border-gray-800 p-5 bg-white dark:bg-gray-900">
-                <div className="h-5 w-3/4 bg-gray-200 dark:bg-gray-700 rounded animate-pulse mb-3" />
-                <div className="h-4 w-full bg-gray-100 dark:bg-gray-800 rounded animate-pulse" />
-              </div>
+        <main className="max-w-5xl mx-auto px-6 py-10">
+          <div className="h-5 w-32 bg-[var(--surface-2)] rounded animate-pulse mb-6" />
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+            {[1, 2, 3].map(i => (
+              <div key={i} className="ui-card p-4 h-[120px] animate-pulse" />
             ))}
           </div>
         </main>

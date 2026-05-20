@@ -74,98 +74,124 @@ export function DrillDownDrawer({
   const watchedCount = allLeafIds.filter(id => watchIdx.get(String(id))).length;
 
   return (
-    <div className={`fixed right-0 top-0 h-screen w-96 bg-white dark:bg-gray-900 shadow-2xl
-                     transition-transform duration-300 z-50 overflow-y-auto flex flex-col
-                     border-l border-gray-200 dark:border-gray-800
+    <div className={`fixed right-0 top-0 h-screen w-[22rem] bg-[var(--surface)]
+                     shadow-[-12px_0_32px_-12px_rgba(0,0,0,0.18)] dark:shadow-[-12px_0_40px_-8px_rgba(0,0,0,0.6)]
+                     transition-transform duration-300 ease-out z-50 overflow-y-auto flex flex-col
+                     border-l border-[var(--border)]
                      ${open ? 'translate-x-0' : 'translate-x-full'}`}>
       {/* Header */}
-      <header className="sticky top-0 bg-white dark:bg-gray-900 border-b border-gray-100 dark:border-gray-800 px-4 py-3 flex items-center justify-between z-10">
+      <header className="sticky top-0 bg-[var(--surface)]/95 backdrop-blur-sm border-b border-[var(--border)] px-4 h-12 flex items-center justify-between z-10">
         <div className="min-w-0">
-          <h2 className="font-bold text-gray-900 dark:text-white truncate text-sm">{node?.title ?? 'Details'}</h2>
+          <h2 className="text-sm font-semibold text-[var(--text)] truncate leading-tight">{node?.title ?? 'Details'}</h2>
           {allLeafIds.length > 0 && (
-            <p className="text-xs text-gray-400 mt-0.5">
-              {watchedCount} / {allLeafIds.length} watched
+            <p className="text-[11px] text-[var(--text-dim)] mt-0.5 tabular-nums">
+              <span className="text-[var(--text-soft)] font-medium">{watchedCount}</span>
+              <span className="opacity-60"> / {allLeafIds.length} watched</span>
             </p>
           )}
         </div>
-        <button onClick={onClose} className="ml-2 shrink-0 w-7 h-7 flex items-center justify-center rounded-lg text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-600 transition-colors text-sm">
-          ✕
+        <button onClick={onClose}
+                className="ml-2 shrink-0 w-7 h-7 flex items-center justify-center rounded-md text-[var(--text-dim)] hover:bg-[var(--surface-2)] hover:text-[var(--text)] transition-colors">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M18 6L6 18M6 6l12 12"/>
+          </svg>
         </button>
       </header>
 
       {/* Poster */}
       {node?.posterUrl && (
-        <img src={node.posterUrl} className="w-full object-cover max-h-48" alt={node.title} />
+        // eslint-disable-next-line @next/next/no-img-element
+        <img src={node.posterUrl} className="w-full object-cover max-h-44" alt={node.title} />
+      )}
+
+      {/* Progress bar */}
+      {allLeafIds.length > 0 && (
+        <div className="px-4 pt-3">
+          <div className="h-1 rounded-full bg-[var(--surface-2)] overflow-hidden">
+            <div className="h-full bg-[var(--success)] transition-all"
+                 style={{ width: `${(watchedCount / allLeafIds.length) * 100}%` }} />
+          </div>
+        </div>
       )}
 
       {/* Bulk actions */}
       {isOwnerOrParticipant && allLeafIds.length > 0 && (
-        <div className="flex gap-2 px-4 py-3 border-b border-gray-100 dark:border-gray-800">
+        <div className="flex gap-1.5 px-4 py-3 border-b border-[var(--border)]">
           <button
-            className="flex-1 text-xs py-1.5 rounded-lg bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400 hover:bg-emerald-100 dark:hover:bg-emerald-900/40 font-medium transition-colors"
+            className="flex-1 text-[11px] uppercase tracking-wider h-7 rounded-md bg-[var(--surface-2)] text-[var(--text-soft)] hover:bg-[var(--surface-hover)] hover:text-[var(--text)] font-medium transition-colors"
             onClick={() => onSetWatchBulk(allLeafIds, true)}
           >
-            Mark all watched
+            ✓ Mark all watched
           </button>
           <button
-            className="flex-1 text-xs py-1.5 rounded-lg bg-gray-50 dark:bg-gray-800 text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 font-medium transition-colors"
+            className="flex-1 text-[11px] uppercase tracking-wider h-7 rounded-md bg-[var(--surface-2)] text-[var(--text-soft)] hover:bg-[var(--surface-hover)] hover:text-[var(--text)] font-medium transition-colors"
             onClick={() => onSetWatchBulk(allLeafIds, false)}
           >
-            Mark all unwatched
+            Reset
           </button>
         </div>
       )}
 
       {/* Episode list */}
-      <div className="flex-1 p-4 space-y-4">
+      <div className="flex-1 p-3 space-y-4">
         {groups.length === 0 && (
-          <p className="text-sm text-gray-400 text-center py-8">No episodes found</p>
+          <p className="text-sm text-[var(--text-dim)] text-center py-8">No episodes found</p>
         )}
-        {groups.map(({ header, episodes }, gi) => (
-          <div key={gi}>
-            {header && (
-              <div className="flex items-center justify-between py-1.5 border-b border-gray-100 dark:border-gray-800 mb-2">
-                <span className="text-xs font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500">
-                  {header.title}
-                </span>
-                {isOwnerOrParticipant && episodes.length > 0 && (
-                  <button
-                    className="text-xs text-blue-500 hover:text-blue-600 font-medium"
-                    onClick={() => onSetWatchBulk(episodes.map(e => e.id), true)}
-                  >
-                    All watched
-                  </button>
-                )}
-              </div>
-            )}
-            <div className="space-y-0.5">
-              {episodes.map(ep => {
-                const watched = watchIdx.get(String(ep.id)) ?? false;
-                return (
-                  <label
-                    key={String(ep.id)}
-                    className={`flex items-center gap-3 px-2 py-2 rounded-lg cursor-pointer transition-colors
-                                ${watched
-                                  ? 'bg-emerald-50 dark:bg-emerald-900/10'
-                                  : 'hover:bg-gray-50 dark:hover:bg-gray-800'}`}
-                  >
-                    <input
-                      type="checkbox"
-                      checked={watched}
-                      onChange={e => isOwnerOrParticipant && onSetWatch(ep.id, e.target.checked)}
-                      disabled={!isOwnerOrParticipant}
-                      className="rounded accent-emerald-500"
-                    />
-                    <span className={`text-sm flex-1 ${watched ? 'text-gray-400 dark:text-gray-500 line-through' : 'text-gray-800 dark:text-gray-200'}`}>
-                      {ep.title}
+        {groups.map(({ header, episodes }, gi) => {
+          const groupWatched = episodes.filter(e => watchIdx.get(String(e.id))).length;
+          const allWatched = groupWatched === episodes.length && episodes.length > 0;
+          return (
+            <div key={gi}>
+              {header && (
+                <div className="flex items-center justify-between px-2 py-1.5 mb-1">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <span className="text-[10px] font-semibold uppercase tracking-wider text-[var(--text-dim)] truncate">
+                      {header.title}
                     </span>
-                    {watched && <span className="text-emerald-500 text-xs shrink-0">✓</span>}
-                  </label>
-                );
-              })}
+                    {episodes.length > 0 && (
+                      <span className="text-[10px] tabular-nums text-[var(--text-dim)] shrink-0">
+                        {groupWatched}/{episodes.length}
+                      </span>
+                    )}
+                  </div>
+                  {isOwnerOrParticipant && episodes.length > 0 && (
+                    <button
+                      className="text-[10px] uppercase tracking-wider text-[var(--text-dim)] hover:text-[var(--accent)] font-medium transition-colors"
+                      onClick={() => onSetWatchBulk(episodes.map(e => e.id), !allWatched)}
+                    >
+                      {allWatched ? 'Reset' : 'All'}
+                    </button>
+                  )}
+                </div>
+              )}
+              <div className="space-y-px">
+                {episodes.map(ep => {
+                  const watched = watchIdx.get(String(ep.id)) ?? false;
+                  return (
+                    <label
+                      key={String(ep.id)}
+                      className={`flex items-center gap-2.5 px-2 py-1.5 rounded-md cursor-pointer transition-colors
+                                  ${watched
+                                    ? 'text-[var(--text-dim)]'
+                                    : 'hover:bg-[var(--surface-2)]'}`}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={watched}
+                        onChange={e => isOwnerOrParticipant && onSetWatch(ep.id, e.target.checked)}
+                        disabled={!isOwnerOrParticipant}
+                        className="rounded accent-[var(--success)] w-3.5 h-3.5"
+                      />
+                      <span className={`text-sm flex-1 truncate ${watched ? 'line-through opacity-60' : 'text-[var(--text)]'}`}>
+                        {ep.title}
+                      </span>
+                    </label>
+                  );
+                })}
+              </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );

@@ -121,130 +121,164 @@ function BoardSettingsInner() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-950">
-      <header className="border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 px-6 py-4 flex items-center gap-4">
-        <Button variant="ghost" size="sm" onClick={() => router.push(`/board/${boardId}`)}>← Back</Button>
-        <h1 className="font-bold text-gray-900 dark:text-white">Board Settings</h1>
+    <div className="min-h-screen">
+      <header className="sticky top-0 z-20 border-b border-[var(--border)] bg-[var(--bg)]/85 backdrop-blur-md">
+        <div className="max-w-2xl mx-auto px-6 h-14 flex items-center gap-3">
+          <Button variant="ghost" size="sm" onClick={() => router.push(`/board/${boardId}`)} className="!px-2">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M19 12H5M12 19l-7-7 7-7"/>
+            </svg>
+            Back
+          </Button>
+          <span className="text-[var(--border-strong)] select-none">/</span>
+          <h1 className="text-sm font-medium text-[var(--text)] truncate">{board?.title ?? 'Settings'}</h1>
+          <span className="text-[10px] uppercase tracking-wider text-[var(--text-dim)] ml-1">Settings</span>
+        </div>
       </header>
-      <main className="max-w-2xl mx-auto px-6 py-10 space-y-6">
 
-        {/* Stats bar */}
+      <main className="max-w-2xl mx-auto px-6 py-8 space-y-5">
+
+        {/* Stats */}
         {board && (
-          <div className="grid grid-cols-3 gap-3">
+          <div className="grid grid-cols-3 gap-2">
             {[
               { label: 'Titles', value: topLevelItems.length },
-              { label: 'Total items', value: totalItems },
-              { label: 'Participants', value: boardParticipants.length },
+              { label: 'Items', value: totalItems },
+              { label: 'Members', value: boardParticipants.length + 1 },
             ].map(stat => (
-              <div key={stat.label} className="bg-white dark:bg-gray-900 rounded-xl p-4 shadow-sm text-center border border-gray-100 dark:border-gray-800">
-                <p className="text-2xl font-bold text-gray-900 dark:text-white">{stat.value}</p>
-                <p className="text-xs text-gray-400 mt-0.5">{stat.label}</p>
+              <div key={stat.label} className="ui-card px-4 py-3">
+                <p className="text-xl font-semibold text-[var(--text)] tabular-nums leading-none">{stat.value}</p>
+                <p className="text-[11px] text-[var(--text-dim)] mt-1.5 uppercase tracking-wider">{stat.label}</p>
               </div>
             ))}
           </div>
         )}
 
         {/* Board info */}
-        <section className="bg-white dark:bg-gray-900 rounded-2xl p-6 shadow-sm border border-gray-100 dark:border-gray-800">
-          <h2 className="font-semibold text-gray-900 dark:text-white mb-5">Board Info</h2>
+        <SettingsSection title="Board" description="Name, description, and sharing.">
           <form onSubmit={handleUpdate} className="space-y-4">
-            <Input label="Title" value={title} onChange={e => setTitle(e.target.value)} maxLength={60} />
-            <label className="block space-y-1">
-              <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Description</span>
+            <Input label="Name" value={title} onChange={e => setTitle(e.target.value)} maxLength={60} />
+            <div className="space-y-1.5">
+              <label htmlFor="settings-desc" className="block text-xs font-medium text-[var(--text-muted)] tracking-wide">
+                Description
+              </label>
               <textarea
+                id="settings-desc"
                 value={description}
                 onChange={e => setDesc(e.target.value)}
                 maxLength={500}
                 rows={3}
-                className="w-full rounded-lg border px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500
-                           border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
+                className="ui-input resize-none"
               />
-            </label>
-            <fieldset className="space-y-2">
-              <legend className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Sharing</legend>
-              {(['PRIVATE', 'PUBLIC'] as const).map(mode => (
-                <label key={mode} className="flex items-center gap-2 cursor-pointer">
-                  <input type="radio" name="sharing" value={mode}
-                         checked={sharingMode === mode} onChange={() => setSharing(mode)} />
-                  <span className="text-sm text-gray-700 dark:text-gray-300">
-                    {mode === 'PRIVATE' ? 'Private — invite link only' : 'Public — anyone with link can view'}
-                  </span>
-                </label>
-              ))}
+            </div>
+            <fieldset className="space-y-1">
+              <legend className="block text-xs font-medium text-[var(--text-muted)] tracking-wide mb-2">
+                Sharing
+              </legend>
+              {([
+                { mode: 'PRIVATE' as const, label: 'Private', desc: 'Invite link required' },
+                { mode: 'PUBLIC'  as const, label: 'Public',  desc: 'Anyone with link can view' },
+              ]).map(({ mode, label, desc }) => {
+                const checked = sharingMode === mode;
+                return (
+                  <label key={mode}
+                         className={`flex items-start gap-3 p-3 rounded-md cursor-pointer border transition-colors
+                                     ${checked
+                                       ? 'border-[var(--accent)] bg-[var(--accent-soft)]'
+                                       : 'border-[var(--border)] hover:bg-[var(--surface-2)]'}`}>
+                    <input type="radio" name="sharing" value={mode}
+                           checked={checked} onChange={() => setSharing(mode)}
+                           className="mt-0.5 accent-[var(--accent)]" />
+                    <div>
+                      <p className="text-sm font-medium text-[var(--text)] leading-tight">{label}</p>
+                      <p className="text-xs text-[var(--text-soft)] mt-0.5">{desc}</p>
+                    </div>
+                  </label>
+                );
+              })}
             </fieldset>
-            <Button type="submit" disabled={editLoading} size="sm">
-              {editLoading ? 'Saving…' : 'Save changes'}
-            </Button>
+            <div className="pt-1">
+              <Button type="submit" disabled={editLoading} size="sm">
+                {editLoading ? 'Saving…' : 'Save changes'}
+              </Button>
+            </div>
           </form>
-        </section>
+        </SettingsSection>
 
         {/* Invite link */}
-        <section className="bg-white dark:bg-gray-900 rounded-2xl p-6 shadow-sm border border-gray-100 dark:border-gray-800">
-          <h2 className="font-semibold text-gray-900 dark:text-white mb-4">Invite Link</h2>
+        <SettingsSection title="Invite link" description="Share this link so others can join.">
           <div className="flex gap-2">
             <input
               readOnly
               value={inviteLink}
-              className="flex-1 rounded-lg border px-3 py-2 text-sm bg-gray-50 dark:bg-gray-800 text-gray-500 truncate border-gray-200 dark:border-gray-700"
+              onFocus={e => e.currentTarget.select()}
+              className="ui-input !bg-[var(--surface-2)] font-mono text-xs text-[var(--text-soft)] truncate"
             />
-            <Button size="sm" variant={copied ? 'secondary' : 'primary'} onClick={handleCopy}>
+            <Button size="sm" variant={copied ? 'secondary' : 'primary'} onClick={handleCopy} className="shrink-0">
               {copied ? '✓ Copied' : 'Copy'}
             </Button>
           </div>
-          <button className="mt-2 text-xs text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors" onClick={handleRegenInvite}>
+          <button
+            className="mt-3 text-xs text-[var(--text-dim)] hover:text-[var(--text)] transition-colors inline-flex items-center gap-1"
+            onClick={handleRegenInvite}
+          >
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M3 12a9 9 0 1 0 9-9M3 4v5h5"/>
+            </svg>
             Regenerate link
           </button>
-        </section>
+        </SettingsSection>
 
-        {/* Participants */}
-        <section className="bg-white dark:bg-gray-900 rounded-2xl p-6 shadow-sm border border-gray-100 dark:border-gray-800">
-          <h2 className="font-semibold text-gray-900 dark:text-white mb-4">
-            Members ({boardParticipants.length + 1})
-          </h2>
-          <ul className="space-y-2">
+        {/* Members */}
+        <SettingsSection title={`Members · ${boardParticipants.length + 1}`} description="People with access to this board.">
+          <ul className="-mx-2 -my-1">
             {/* Owner row */}
-            <li className="flex items-center justify-between py-1.5">
-              <div className="flex items-center gap-2">
-                <div className="w-7 h-7 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center text-xs font-bold text-blue-600 dark:text-blue-400">
+            <li className="flex items-center justify-between px-2 py-2 rounded-md">
+              <div className="flex items-center gap-2.5">
+                <div className="w-7 h-7 rounded-full bg-[var(--accent-soft)] flex items-center justify-center text-xs font-semibold text-[var(--accent)]">
                   {ownerName.charAt(0).toUpperCase()}
                 </div>
-                <span className="text-sm text-gray-800 dark:text-gray-200">{ownerName}</span>
+                <span className="text-sm text-[var(--text)]">{ownerName}</span>
               </div>
-              <span className="text-xs bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 px-2 py-0.5 rounded-full font-medium">Owner</span>
+              <span className="text-[10px] uppercase tracking-wider font-medium px-1.5 py-0.5 rounded bg-[var(--accent-soft)] text-[var(--accent)]">
+                Owner
+              </span>
             </li>
             {boardParticipants.map(p => (
-              <li key={String(p.id)} className="flex items-center justify-between py-1.5">
-                <div className="flex items-center gap-2">
-                  <div className="w-7 h-7 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center text-xs font-bold text-gray-500 dark:text-gray-400">
+              <li key={String(p.id)} className="flex items-center justify-between px-2 py-2 rounded-md ui-row-hover group">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-7 h-7 rounded-full bg-[var(--surface-2)] flex items-center justify-center text-xs font-semibold text-[var(--text-soft)]">
                     {p.displayName.charAt(0).toUpperCase()}
                   </div>
-                  <span className="text-sm text-gray-700 dark:text-gray-300">{p.displayName}</span>
+                  <span className="text-sm text-[var(--text)]">{p.displayName}</span>
                 </div>
-                <Button
-                  variant="ghost" size="sm"
-                  className="text-red-500 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20 text-xs"
+                <button
+                  className="text-[11px] text-[var(--text-dim)] hover:text-[var(--danger)] opacity-0 group-hover:opacity-100 transition-opacity px-1.5 py-1"
                   onClick={() => handleRemoveParticipant(p.id, p.displayName)}
                 >
                   Remove
-                </Button>
+                </button>
               </li>
             ))}
           </ul>
-        </section>
+        </SettingsSection>
 
         {/* Danger zone */}
-        <section className="bg-white dark:bg-gray-900 rounded-2xl p-6 shadow-sm border border-red-200 dark:border-red-900/50">
-          <h2 className="font-semibold text-red-600 mb-3">Danger Zone</h2>
+        <section className="ui-card border-[var(--danger)]/30 p-6">
+          <div className="mb-4">
+            <h2 className="text-sm font-semibold text-[var(--danger)]">Danger zone</h2>
+            <p className="text-xs text-[var(--text-soft)] mt-0.5">Permanent and irreversible actions.</p>
+          </div>
           {deleteConfirm ? (
-            <div className="space-y-3">
-              <p className="text-sm text-red-600">This will permanently delete the board and all its data. This cannot be undone.</p>
+            <div className="space-y-3 p-3 rounded-md bg-[var(--danger-soft)] border border-[var(--danger)]/20">
+              <p className="text-sm text-[var(--text)]">Permanently delete this board and all its data?</p>
               <div className="flex gap-2">
-                <Button variant="danger" size="sm" onClick={handleDelete}>Yes, delete permanently</Button>
+                <Button variant="danger" size="sm" onClick={handleDelete}>Yes, delete</Button>
                 <Button variant="secondary" size="sm" onClick={() => setDC(false)}>Cancel</Button>
               </div>
             </div>
           ) : (
-            <Button variant="danger" size="sm" onClick={handleDelete}>Delete Board</Button>
+            <Button variant="danger" size="sm" onClick={handleDelete}>Delete board</Button>
           )}
         </section>
 
@@ -253,14 +287,25 @@ function BoardSettingsInner() {
   );
 }
 
+function SettingsSection({ title, description, children }: { title: string; description?: string; children: React.ReactNode }) {
+  return (
+    <section className="ui-card p-6">
+      <div className="mb-5">
+        <h2 className="text-sm font-semibold text-[var(--text)]">{title}</h2>
+        {description && <p className="text-xs text-[var(--text-soft)] mt-0.5">{description}</p>}
+      </div>
+      {children}
+    </section>
+  );
+}
+
 export default function BoardSettingsPage() {
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
   if (!mounted) return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-950">
-      <header className="border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 px-6 py-4 flex items-center gap-4">
-        <div className="h-6 w-16 bg-gray-200 dark:bg-gray-700 rounded animate-pulse" />
-        <div className="h-6 w-32 bg-gray-200 dark:bg-gray-700 rounded animate-pulse" />
+    <div className="min-h-screen">
+      <header className="border-b border-[var(--border)] h-14 flex items-center px-6">
+        <div className="h-5 w-32 bg-[var(--surface-2)] rounded animate-pulse" />
       </header>
     </div>
   );

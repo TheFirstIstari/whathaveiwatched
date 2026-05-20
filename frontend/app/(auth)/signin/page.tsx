@@ -46,11 +46,14 @@ export default function SignInPage() {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gray-50 dark:bg-gray-950 p-4">
-      <div className="w-full max-w-sm rounded-2xl bg-white dark:bg-gray-900 p-8 shadow-lg space-y-6">
-        <div className="text-center space-y-1">
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">IHaveWatched</h1>
-          <p className="text-gray-500 dark:text-gray-400 text-sm">
+    <div className="flex min-h-screen items-center justify-center p-4">
+      <div className="w-full max-w-sm ui-card p-8 space-y-7">
+        <div className="text-center space-y-2">
+          <div className="inline-flex items-center gap-2 mb-1">
+            <span className="w-7 h-7 rounded-md bg-gradient-to-br from-indigo-500 to-violet-500" aria-hidden />
+            <span className="text-lg font-semibold tracking-tight text-[var(--text)]">IHaveWatched</span>
+          </div>
+          <p className="text-[var(--text-soft)] text-sm">
             Collaborative media tracking for watchparties
           </p>
         </div>
@@ -66,12 +69,12 @@ export default function SignInPage() {
             autoFocus
           />
           <Button type="submit" disabled={loading} className="w-full" size="lg">
-            {loading ? 'Setting up…' : 'Get started'}
+            {loading ? 'Setting up…' : 'Get started →'}
           </Button>
         </form>
 
-        <p className="text-xs text-center text-gray-400">
-          No account needed. Your boards are tied to this device.
+        <p className="text-xs text-center text-[var(--text-dim)] leading-relaxed">
+          No account needed.<br/>Your boards are tied to this device.
         </p>
       </div>
     </div>

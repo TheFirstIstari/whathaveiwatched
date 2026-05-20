@@ -20,9 +20,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           `(function(){try{if(localStorage.getItem('ihw_theme')==='dark')document.documentElement.classList.add('dark')}catch(e){}})();`
         }} />
       </head>
-      <body className={`${inter.className} bg-gray-50 dark:bg-[#0f0f17]`}>
+      <body className={inter.className}>
         <Providers>{children}</Providers>
-        <Toaster position="bottom-right" richColors />
+        <Toaster position="bottom-right" richColors theme="system" toastOptions={{ style: { borderRadius: 10 } }} />
       </body>
     </html>
   );

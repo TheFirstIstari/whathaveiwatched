@@ -47,10 +47,13 @@ function NewBoardPageInner() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-950 flex items-center justify-center p-4">
-      <div className="w-full max-w-md bg-white dark:bg-gray-900 rounded-2xl p-8 shadow-lg">
-        <h1 className="text-xl font-bold text-gray-900 dark:text-white mb-6">Create Board</h1>
-        <form onSubmit={handleSubmit} className="space-y-5">
+    <div className="min-h-screen flex items-center justify-center p-4">
+      <div className="w-full max-w-md ui-card p-8">
+        <div className="mb-6">
+          <h1 className="text-lg font-semibold tracking-tight text-[var(--text)]">Create board</h1>
+          <p className="text-xs text-[var(--text-dim)] mt-1">A space to track watched media with friends.</p>
+        </div>
+        <form onSubmit={handleSubmit} className="space-y-4">
           <Input
             label="Board name"
             value={title}
@@ -60,26 +63,29 @@ function NewBoardPageInner() {
             maxLength={60}
             autoFocus
           />
-          <label className="block space-y-1">
-            <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Description (optional)</span>
+          <div className="space-y-1.5">
+            <label htmlFor="desc" className="block text-xs font-medium text-[var(--text-muted)] tracking-wide">
+              Description <span className="text-[var(--text-dim)] font-normal">(optional)</span>
+            </label>
             <textarea
+              id="desc"
               value={description}
               onChange={e => setDescription(e.target.value)}
               maxLength={500}
               rows={3}
-              className="w-full rounded-lg border px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500
-                         border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
+              className="ui-input resize-none"
+              placeholder="What's this board about?"
             />
-          </label>
-          <p className="text-xs text-gray-400 dark:text-gray-500">
+          </div>
+          <p className="text-xs text-[var(--text-dim)] leading-relaxed">
             Boards start private. You can change sharing &amp; invite settings after creation.
           </p>
-          <div className="flex gap-3 pt-2">
+          <div className="flex gap-2 pt-2">
             <Button type="button" variant="secondary" onClick={() => router.back()} className="flex-1">
               Cancel
             </Button>
             <Button type="submit" disabled={loading} className="flex-1">
-              {loading ? 'Creating…' : 'Create Board'}
+              {loading ? 'Creating…' : 'Create board'}
             </Button>
           </div>
         </form>
@@ -91,6 +97,6 @@ function NewBoardPageInner() {
 export default function NewBoardPage() {
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
-  if (!mounted) return <div className="min-h-screen bg-gray-50 dark:bg-gray-950 flex items-center justify-center"><p className="text-gray-400 text-sm">Loading…</p></div>;
+  if (!mounted) return <div className="min-h-screen flex items-center justify-center"><p className="text-[var(--text-dim)] text-sm">Loading…</p></div>;
   return <NewBoardPageInner />;
 }
