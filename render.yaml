@@ -1,0 +1,19 @@
+services:
+  - type: web
+    name: ihavewatched
+    runtime: node
+    rootDir: frontend
+    buildCommand: npm ci && npm run build
+    startCommand: npm start
+    pullRequestPreviewsEnabled: false
+    domains:
+      - watched.tweak.wiki
+    envVars:
+      - key: NODE_VERSION
+        value: 22
+      - key: NEXT_PUBLIC_SPACETIMEDB_HOST
+        sync: false   # set manually in Render dashboard
+      - key: NEXT_PUBLIC_SPACETIMEDB_DB
+        value: whathaveiwatched
+      - key: TMDB_READ_ACCESS_TOKEN
+        sync: false   # set manually in Render dashboard
