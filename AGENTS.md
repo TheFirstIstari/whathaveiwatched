@@ -33,3 +33,14 @@ NEXT_PUBLIC_SPACETIMEDB_HOST=wss://<host>
 NEXT_PUBLIC_SPACETIMEDB_DB=whathaveiwatched
 TMDB_READ_ACCESS_TOKEN=<token>
 ```
+
+## Deployment & Render efficiency
+
+- Deployed on Render as a Node web service at `watched.tweak.wiki` (see root `render.yaml`).
+- **Health check / keep-warm:** `GET /api/health` (no I/O, no-store). Wired as Render `healthCheckPath`; also a cheap cron-ping target to mitigate free-tier cold starts.
+- **Caching:** TMDB proxy routes (`/api/tmdb/search`, `/api/tmdb/fetch`) set `Cache-Control` (CDN `s-maxage` + `stale-while-revalidate`) so repeat queries don't re-hit the origin or TMDB. Do **not** reintroduce a blanket `no-store` in `next.config.ts` — board pages are client-rendered with no per-user SSR data.
+- Posters load directly from `image.tmdb.org` via `<img>` (no `next/image`), so there is **no** Render image-optimization cost. Keep it that way.
+
+## Theme
+
+Monolithic terminal palette (single teal accent + neutral grays), JetBrains Mono, **light is the default**. CSS-var tokens live in `app/globals.css` (`:root` light, `.dark` override); the Konva canvas mirrors them in `lib/theme.ts` (`LIGHT_THEME`/`DARK_THEME`). Watch-state chips stay color-coded (green/amber) for usability.
