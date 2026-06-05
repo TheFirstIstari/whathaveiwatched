@@ -17,6 +17,11 @@ function DashboardInner() {
   const [displayName, setDisplayName_] = useState('');
   const [identityHex, setIdentityHex_] = useState<string | null>(null);
 
+  // Board list controls
+  const [query, setQuery] = useState('');
+  const [sortBy, setSortBy] = useState<'recent' | 'name' | 'titles' | 'members'>('recent');
+  const [visibility, setVisibility] = useState<'all' | 'public' | 'private'>('all');
+
   useEffect(() => {
     const name = getDisplayName();
     if (!name) { router.replace('/signin'); return; }
@@ -60,6 +65,33 @@ function DashboardInner() {
 
   const totalTitles = myBoards.reduce((sum, b) => sum + itemCountForBoard(b.id), 0);
   const totalMembers = myBoards.reduce((sum, b) => sum + participantCountForBoard(b.id), 0);
+
+  const applyControls = (boards: BoardRow[], useVisibility: boolean) => {
+    const q = query.trim().toLowerCase();
+    let list = boards;
+    if (q) {
+      list = list.filter(b =>
+        b.title.toLowerCase().includes(q) || b.description.toLowerCase().includes(q));
+    }
+    if (useVisibility && visibility !== 'all') {
+      list = list.filter(b =>
+        visibility === 'public' ? b.sharingMode === 'PUBLIC' : b.sharingMode !== 'PUBLIC');
+    }
+    const sorted = [...list];
+    sorted.sort((a, b) => {
+      switch (sortBy) {
+        case 'name':    return a.title.localeCompare(b.title);
+        case 'titles':  return itemCountForBoard(b.id) - itemCountForBoard(a.id);
+        case 'members': return participantCountForBoard(b.id) - participantCountForBoard(a.id);
+        default:        return Number(b.id - a.id); // recent: higher id first
+      }
+    });
+    return sorted;
+  };
+
+  const visibleMyBoards = applyControls(myBoards, true);
+  const visibleJoinedBoards = applyControls(joinedBoards, false);
+  const isFiltering = query.trim() !== '' || visibility !== 'all';
 
   return (
     <div className="min-h-screen">
@@ -120,6 +152,15 @@ function DashboardInner() {
           </div>
         </section>
 
+        {/* Controls — only once there are boards to act on */}
+        {(myBoards.length + joinedBoards.length) > 0 && (
+          <Toolbar
+            query={query} onQuery={setQuery}
+            sortBy={sortBy} onSort={setSortBy}
+            visibility={visibility} onVisibility={setVisibility}
+          />
+        )}
+
         {/* Board sections */}
         <section className="space-y-10">
           <BoardSection
@@ -133,14 +174,22 @@ function DashboardInner() {
                 description="Start with a franchise, movie marathon, or series watchthrough."
                 cta={<Button onClick={() => router.push('/boards/new')}>Create board</Button>}
               />
+            ) : visibleMyBoards.length === 0 ? (
+              <NoMatches onClear={() => { setQuery(''); setVisibility('all'); }} />
             ) : (
-              <BoardGrid boards={myBoards} itemCount={itemCountForBoard} participantCount={participantCountForBoard} onOpen={id => router.push(`/board/${id}`)} />
+              <BoardGrid boards={visibleMyBoards} itemCount={itemCountForBoard} participantCount={participantCountForBoard} onOpen={id => router.push(`/board/${id}`)} />
             )}
           </BoardSection>
 
           {joinedBoards.length > 0 && (
             <BoardSection title="Joined boards" subtitle="Shared with you">
-              <BoardGrid boards={joinedBoards} itemCount={itemCountForBoard} participantCount={participantCountForBoard} onOpen={id => router.push(`/board/${id}`)} />
+              {visibleJoinedBoards.length === 0 ? (
+                <p className="text-sm text-[var(--text-dim)]">
+                  {isFiltering ? 'No joined boards match your search.' : 'No joined boards.'}
+                </p>
+              ) : (
+                <BoardGrid boards={visibleJoinedBoards} itemCount={itemCountForBoard} participantCount={participantCountForBoard} onOpen={id => router.push(`/board/${id}`)} />
+              )}
             </BoardSection>
           )}
         </section>
@@ -176,6 +225,69 @@ function BoardSection({ title, subtitle, action, children }: { title: string; su
       </div>
       {children}
     </section>
+  );
+}
+
+type SortBy = 'recent' | 'name' | 'titles' | 'members';
+type Visibility = 'all' | 'public' | 'private';
+
+function Toolbar({
+  query, onQuery, sortBy, onSort, visibility, onVisibility,
+}: {
+  query: string; onQuery: (v: string) => void;
+  sortBy: SortBy; onSort: (v: SortBy) => void;
+  visibility: Visibility; onVisibility: (v: Visibility) => void;
+}) {
+  const segBtn = (active: boolean) =>
+    `px-2.5 py-1.5 text-xs transition-colors ${
+      active ? 'bg-[var(--accent-soft)] text-[var(--accent)]' : 'text-[var(--text-soft)] hover:text-[var(--text)]'
+    }`;
+  return (
+    <div className="flex flex-col sm:flex-row sm:items-center gap-3 mb-8">
+      <div className="relative flex-1 max-w-md">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"
+             strokeLinecap="round" strokeLinejoin="round"
+             className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-dim)] pointer-events-none">
+          <circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/>
+        </svg>
+        <input
+          value={query}
+          onChange={e => onQuery(e.target.value)}
+          placeholder="Search boards…"
+          className="ui-input !pl-9"
+          aria-label="Search boards"
+        />
+      </div>
+      <div className="flex items-center gap-2">
+        <div className="flex items-center rounded-[var(--radius-md)] border border-[var(--border)] overflow-hidden">
+          {(['all', 'public', 'private'] as Visibility[]).map(v => (
+            <button key={v} onClick={() => onVisibility(v)} className={segBtn(visibility === v)}>
+              {v[0].toUpperCase() + v.slice(1)}
+            </button>
+          ))}
+        </div>
+        <select
+          value={sortBy}
+          onChange={e => onSort(e.target.value as SortBy)}
+          aria-label="Sort boards"
+          className="ui-input !py-1.5 !w-auto cursor-pointer"
+        >
+          <option value="recent">Recent</option>
+          <option value="name">Name</option>
+          <option value="titles">Most titles</option>
+          <option value="members">Most members</option>
+        </select>
+      </div>
+    </div>
+  );
+}
+
+function NoMatches({ onClear }: { onClear: () => void }) {
+  return (
+    <div className="ui-card flex flex-col items-center justify-center text-center px-6 py-12 gap-3">
+      <p className="text-sm text-[var(--text-soft)]">No boards match your filters.</p>
+      <Button variant="ghost" size="sm" onClick={onClear}>Clear filters</Button>
+    </div>
   );
 }
 
