@@ -1,5 +1,6 @@
 'use client';
 import * as Dialog from '@radix-ui/react-dialog';
+import { Button } from '@/components/ui/Button';
 
 interface ModalProps {
   open: boolean;
@@ -30,14 +31,14 @@ export function Modal({ open, onOpenChange, title, description, children }: Moda
             )}
           </div>
           {children}
-          <Dialog.Close
-            aria-label="Close"
-            className="absolute top-4 right-4 w-7 h-7 flex items-center justify-center rounded-[var(--radius-sm)]
-                       text-[var(--text-dim)] hover:bg-[var(--surface-2)] hover:text-[var(--text)] transition-colors"
-          >
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M18 6L6 18M6 6l12 12"/>
-            </svg>
+          <Dialog.Close asChild>
+            <Button variant="ghost" size="sm" icon
+                    aria-label="Close"
+                    className="absolute top-4 right-4">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M18 6L6 18M6 6l12 12"/>
+              </svg>
+            </Button>
           </Dialog.Close>
         </Dialog.Content>
       </Dialog.Portal>

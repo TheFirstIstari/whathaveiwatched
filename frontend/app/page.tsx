@@ -66,12 +66,13 @@ function DashboardInner() {
       <ConnectionBanner />
       <header className="sticky top-0 z-30 border-b border-[var(--border)] bg-[var(--surface)]/70 backdrop-blur-xl">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-14 flex items-center justify-between">
-          <button onClick={() => router.push('/')} className="flex items-center gap-3 group">
-            <span className="relative w-8 h-8 rounded-[var(--radius-lg)] bg-[var(--text)] text-[var(--bg)] flex items-center justify-center shadow-[var(--shadow-sm)] overflow-hidden">
-              <span className="absolute inset-0 bg-gradient-to-br from-white/20 to-transparent" />
-              <span className="relative text-xs font-black">I</span>
+          <button onClick={() => router.push('/')} className="flex items-center gap-2.5 group">
+            <span className="w-7 h-7 rounded-[var(--radius-sm)] bg-[var(--accent)] text-[var(--accent-fg)] flex items-center justify-center text-xs font-bold">
+              ▸
             </span>
-            <span className="font-semibold tracking-tight text-[var(--text)] text-sm">IHaveWatched</span>
+            <span className="font-semibold tracking-tight text-[var(--text)] text-sm">
+              ihavewatched
+            </span>
           </button>
           <div className="flex items-center gap-1.5">
             {displayName && (
@@ -95,10 +96,9 @@ function DashboardInner() {
         {/* Hero Section */}
         <section className="grid lg:grid-cols-[1fr_22rem] gap-5 mb-10">
           <div className="ui-card p-6 sm:p-8 overflow-hidden relative">
-            <div className="absolute -right-24 -top-24 w-72 h-72 rounded-full bg-[var(--accent-soft)] blur-3xl" />
             <div className="relative max-w-2xl">
               <p className="text-xs font-medium uppercase tracking-[0.16em] text-[var(--accent)] mb-3">
-                Watchparty boards
+                <span className="text-[var(--text-dim)]">❯</span> watchparty boards
               </p>
               <h1 className="text-3xl sm:text-4xl lg:text-5xl font-semibold leading-[1.04] text-[var(--text)] mb-4 tracking-tight">
                 Track shared watch progress without spreadsheets.

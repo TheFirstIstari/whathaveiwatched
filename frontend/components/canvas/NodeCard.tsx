@@ -288,13 +288,14 @@ export function NodeCard({
         listening={false}
       />
 
-      {/* Watch chips */}
+      {/* Watch chips — limit visible count to avoid overflowing narrow cards */}
       {isOwnerOrParticipant && (
         <WatchChips
           participants={participants}
           x={8}
           y={h - chipDiam - 10}
           chipDiameter={chipDiam}
+          maxChips={Math.max(2, Math.floor((w - 24) / (chipDiam + 4)) - 1)}
         />
       )}
 

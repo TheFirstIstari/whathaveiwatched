@@ -13,14 +13,14 @@ interface Props {
   x: number;
   y: number;
   chipDiameter: number;
+  maxChips?: number;
 }
 
-const MAX_CHIPS = 5;
 const GAP = 4;
 
-export function WatchChips({ participants, x, y, chipDiameter }: Props) {
-  const visible  = participants.slice(0, MAX_CHIPS);
-  const overflow = participants.length - MAX_CHIPS;
+export function WatchChips({ participants, x, y, chipDiameter, maxChips = 5 }: Props) {
+  const visible  = participants.slice(0, maxChips);
+  const overflow = participants.length - maxChips;
   const r        = chipDiameter / 2;
   const step     = chipDiameter + GAP;
 

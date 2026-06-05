@@ -40,13 +40,20 @@ const variants: Record<Variant, string> = {
 };
 
 const sizes: Record<Size, string> = {
-  sm: 'h-8 px-3 text-xs gap-1',
-  md: 'h-10 px-4 text-sm',
-  lg: 'h-11 px-5 text-sm',
+  sm: 'h-9 px-3.5 text-xs gap-1.5',
+  md: 'h-10 px-5 text-sm gap-1.5',
+  lg: 'h-12 px-6 text-sm gap-2',
+};
+
+const iconSizes: Record<Size, string> = {
+  sm: 'h-8 w-8 p-0',
+  md: 'h-9 w-9 p-0',
+  lg: 'h-10 w-10 p-0',
 };
 
 export function Button({
-  variant = 'primary', size = 'md', className = '', ...props
-}: { variant?: Variant; size?: Size } & React.ButtonHTMLAttributes<HTMLButtonElement>) {
-  return <button className={`${base} ${variants[variant]} ${sizes[size]} ${className}`} {...props} />;
+  variant = 'primary', size = 'md', icon = false, className = '', ...props
+}: { variant?: Variant; size?: Size; icon?: boolean } & React.ButtonHTMLAttributes<HTMLButtonElement>) {
+  const sz = icon ? iconSizes[size] : sizes[size];
+  return <button className={`${base} ${variants[variant]} ${sz} ${className}`} {...props} />;
 }

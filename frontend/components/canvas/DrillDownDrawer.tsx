@@ -1,5 +1,6 @@
 'use client';
 import { useMemo } from 'react';
+import { Button } from '@/components/ui/Button';
 
 interface MediaItemLike {
   id: bigint;
@@ -90,12 +91,11 @@ export function DrillDownDrawer({
             </p>
           )}
         </div>
-        <button onClick={onClose}
-                className="ml-2 shrink-0 w-7 h-7 flex items-center justify-center rounded-md text-[var(--text-dim)] hover:bg-[var(--surface-2)] hover:text-[var(--text)] transition-colors">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <Button variant="ghost" size="sm" icon onClick={onClose} title="Close">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <path d="M18 6L6 18M6 6l12 12"/>
           </svg>
-        </button>
+        </Button>
       </header>
 
       {/* Poster */}
@@ -116,19 +116,13 @@ export function DrillDownDrawer({
 
       {/* Bulk actions */}
       {isOwnerOrParticipant && allLeafIds.length > 0 && (
-        <div className="flex gap-1.5 px-4 py-3 border-b border-[var(--border)]">
-          <button
-            className="flex-1 text-[11px] uppercase tracking-wider h-7 rounded-md bg-[var(--surface-2)] text-[var(--text-soft)] hover:bg-[var(--surface-hover)] hover:text-[var(--text)] font-medium transition-colors"
-            onClick={() => onSetWatchBulk(allLeafIds, true)}
-          >
+        <div className="flex gap-2 px-4 py-3 border-b border-[var(--border)]">
+          <Button size="sm" className="flex-1" onClick={() => onSetWatchBulk(allLeafIds, true)}>
             ✓ Mark all watched
-          </button>
-          <button
-            className="flex-1 text-[11px] uppercase tracking-wider h-7 rounded-md bg-[var(--surface-2)] text-[var(--text-soft)] hover:bg-[var(--surface-hover)] hover:text-[var(--text)] font-medium transition-colors"
-            onClick={() => onSetWatchBulk(allLeafIds, false)}
-          >
+          </Button>
+          <Button variant="secondary" size="sm" className="flex-1" onClick={() => onSetWatchBulk(allLeafIds, false)}>
             Reset
-          </button>
+          </Button>
         </div>
       )}
 
@@ -156,7 +150,7 @@ export function DrillDownDrawer({
                   </div>
                   {isOwnerOrParticipant && episodes.length > 0 && (
                     <button
-                      className="text-[10px] uppercase tracking-wider text-[var(--text-dim)] hover:text-[var(--accent)] font-medium transition-colors"
+                      className="text-[10px] uppercase tracking-wider text-[var(--text-dim)] hover:text-[var(--accent)] font-medium transition-colors rounded-[var(--radius-sm)] px-1.5 py-0.5 hover:bg-[var(--surface-2)]"
                       onClick={() => onSetWatchBulk(episodes.map(e => e.id), !allWatched)}
                     >
                       {allWatched ? 'Reset' : 'All'}

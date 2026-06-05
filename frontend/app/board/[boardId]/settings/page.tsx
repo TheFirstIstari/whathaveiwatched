@@ -124,12 +124,12 @@ function BoardSettingsInner() {
   return (
     <div className="min-h-screen">
       <header className="sticky top-0 z-20 border-b border-[var(--border)] bg-[var(--surface)]/70 backdrop-blur-xl">
-        <div className="max-w-2xl mx-auto px-4 sm:px-6 h-14 flex items-center gap-2.5">
-          <Button variant="ghost" size="sm" onClick={() => router.push(`/board/${boardId}`)} className="!px-2">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <div className="max-w-2xl mx-auto px-4 sm:px-6 h-12 flex items-center gap-2.5">
+          <Button variant="ghost" size="sm" icon onClick={() => router.push(`/board/${boardId}`)}
+                  title="Back to board">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M19 12H5M12 19l-7-7 7-7"/>
             </svg>
-            Back
           </Button>
           <span className="text-[var(--border-strong)] select-none text-sm">/</span>
           <h1 className="text-sm font-medium text-[var(--text)] truncate">{board?.title ?? 'Settings'}</h1>
