@@ -32,6 +32,7 @@ function DashboardInner() {
   const [allBoards]       = useTable(tables.board);
   const [allParticipants] = useTable(tables.participant);
   const [allMediaItems]   = useTable(tables.media_item);
+  const [allWatchAggs]    = useTable(tables.watch_aggregate);
   const registerOwner     = useReducer(reducers.registerOwner);
 
   useEffect(() => {
@@ -62,6 +63,29 @@ function DashboardInner() {
 
   const participantCountForBoard = (boardId: bigint) =>
     allParticipants.filter(p => p.boardId === boardId).length;
+
+  // Top-level (FILM/SHOW) item ids per board — episodes/seasons roll up into these.
+  const topLevelIdsForBoard = (boardId: bigint) =>
+    new Set(
+      allMediaItems
+        .filter(m => m.boardId === boardId && (m.mediaType === 'FILM' || m.mediaType === 'SHOW'))
+        .map(m => m.id)
+    );
+
+  // Current user's watch progress across a board (watched episodes/films / total).
+  const progressForBoard = (boardId: bigint): { pct: number; total: number } => {
+    if (!identityHex) return { pct: 0, total: 0 };
+    const topIds = topLevelIdsForBoard(boardId);
+    let watched = 0, total = 0;
+    for (const a of allWatchAggs) {
+      if (a.boardId !== boardId) continue;
+      if (a.watcherIdentity.toHexString() !== identityHex) continue;
+      if (!topIds.has(a.mediaItemId)) continue;
+      watched += a.watchedCount;
+      total += a.totalCount;
+    }
+    return { pct: total > 0 ? Math.round((watched / total) * 100) : 0, total };
+  };
 
   const totalTitles = myBoards.reduce((sum, b) => sum + itemCountForBoard(b.id), 0);
   const totalMembers = myBoards.reduce((sum, b) => sum + participantCountForBoard(b.id), 0);
@@ -177,7 +201,7 @@ function DashboardInner() {
             ) : visibleMyBoards.length === 0 ? (
               <NoMatches onClear={() => { setQuery(''); setVisibility('all'); }} />
             ) : (
-              <BoardGrid boards={visibleMyBoards} itemCount={itemCountForBoard} participantCount={participantCountForBoard} onOpen={id => router.push(`/board/${id}`)} />
+              <BoardGrid boards={visibleMyBoards} itemCount={itemCountForBoard} participantCount={participantCountForBoard} progress={progressForBoard} onOpen={id => router.push(`/board/${id}`)} />
             )}
           </BoardSection>
 
@@ -188,7 +212,7 @@ function DashboardInner() {
                   {isFiltering ? 'No joined boards match your search.' : 'No joined boards.'}
                 </p>
               ) : (
-                <BoardGrid boards={visibleJoinedBoards} itemCount={itemCountForBoard} participantCount={participantCountForBoard} onOpen={id => router.push(`/board/${id}`)} />
+                <BoardGrid boards={visibleJoinedBoards} itemCount={itemCountForBoard} participantCount={participantCountForBoard} progress={progressForBoard} onOpen={id => router.push(`/board/${id}`)} />
               )}
             </BoardSection>
           )}
@@ -310,11 +334,12 @@ function EmptyState({ title, description, cta }: { title: string; description: s
 }
 
 function BoardGrid({
-  boards, itemCount, participantCount, onOpen,
+  boards, itemCount, participantCount, progress, onOpen,
 }: {
   boards: BoardRow[];
   itemCount: (id: bigint) => number;
   participantCount: (id: bigint) => number;
+  progress: (id: bigint) => { pct: number; total: number };
   onOpen: (id: bigint) => void;
 }) {
   return (
@@ -322,6 +347,7 @@ function BoardGrid({
       {boards.map(board => {
         const items = itemCount(board.id);
         const parts = participantCount(board.id);
+        const prog = progress(board.id);
         const isPublic = board.sharingMode === 'PUBLIC';
         return (
           <button
@@ -348,6 +374,20 @@ function BoardGrid({
               </p>
             ) : (
               <p className="text-xs text-[var(--text-dim)] italic mb-4 min-h-[2rem]">No description</p>
+            )}
+            {prog.total > 0 && (
+              <div className="mb-4">
+                <div className="flex items-center justify-between mb-1.5">
+                  <span className="text-[10px] uppercase tracking-wider text-[var(--text-dim)]">Your progress</span>
+                  <span className="text-[11px] font-medium tabular-nums text-[var(--text-soft)]">{prog.pct}%</span>
+                </div>
+                <div className="h-1.5 rounded-[var(--radius-full)] bg-[var(--surface-2)] overflow-hidden">
+                  <div
+                    className="h-full rounded-[var(--radius-full)] bg-[var(--accent)] transition-[width] duration-300"
+                    style={{ width: `${prog.pct}%` }}
+                  />
+                </div>
+              </div>
             )}
             <div className="flex items-center gap-3 text-[11px] text-[var(--text-dim)] pt-3 border-t border-[var(--border)]">
               <span className="inline-flex items-center gap-1.5">
