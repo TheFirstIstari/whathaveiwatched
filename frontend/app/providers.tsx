@@ -20,9 +20,7 @@ function ThemeProvider({ children }: { children: React.ReactNode }) {
   const [isDark, setIsDark] = useState(false);
   useEffect(() => {
     const stored = localStorage.getItem('ihw_theme');
-    const dark = stored
-      ? stored === 'dark'
-      : window.matchMedia('(prefers-color-scheme: dark)').matches;
+    const dark = stored === 'dark'; // light is the default
     setIsDark(dark);
     document.documentElement.classList.toggle('dark', dark);
   }, []);

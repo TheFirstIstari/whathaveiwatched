@@ -3,75 +3,76 @@
 @tailwind utilities;
 
 @layer base {
+  /* Monolithic palette: single teal accent + neutral grays. Light = default. */
   :root {
     /* Backgrounds */
-    --bg:            #f4f5f9;
-    --surface:       rgba(255, 255, 255, 0.82);
-    --surface-solid: #ffffff;
-    --surface-2:     #edf0f6;
-    --surface-hover: #e6eaf2;
+    --bg:            #e8e8e5;
+    --surface:       rgba(242, 242, 239, 0.82);
+    --surface-solid: #f2f2ef;
+    --surface-2:     #e2e2de;
+    --surface-hover: #dededa;
 
     /* Borders */
-    --border:        rgba(15, 23, 42, 0.08);
-    --border-strong: rgba(15, 23, 42, 0.16);
-    --border-accent: rgba(99, 102, 241, 0.25);
+    --border:        rgba(20, 20, 18, 0.14);
+    --border-strong: rgba(20, 20, 18, 0.24);
+    --border-accent: rgba(15, 118, 110, 0.30);
 
     /* Text */
-    --text:          #0f172a;
-    --text-muted:    #334155;
-    --text-soft:     #64748b;
-    --text-dim:      #94a3b8;
+    --text:          #18181b;
+    --text-muted:    rgba(24, 24, 27, 0.72);
+    --text-soft:     rgba(24, 24, 27, 0.55);
+    --text-dim:      rgba(24, 24, 27, 0.40);
 
     /* Accent */
-    --accent:        #6366f1;
-    --accent-hover:  #4f46e5;
-    --accent-soft:   rgba(99, 102, 241, 0.10);
+    --accent:        #0f766e;
+    --accent-hover:  #0b5d57;
+    --accent-soft:   rgba(15, 118, 110, 0.10);
     --accent-fg:     #ffffff;
 
-    /* Feedback */
+    /* Feedback (watch-state semantics kept functional) */
     --danger:        #ef4444;
     --danger-soft:   rgba(239, 68, 68, 0.10);
     --success:       #10b981;
     --warning:       #f59e0b;
 
     /* Ring & shadows */
-    --ring:          rgba(99, 102, 241, 0.30);
-    --shadow-xs:     0 1px 2px rgba(15, 23, 42, 0.04);
-    --shadow-sm:     0 1px 3px rgba(15, 23, 42, 0.06), 0 1px 2px rgba(15, 23, 42, 0.04);
-    --shadow-md:     0 4px 12px -4px rgba(15, 23, 42, 0.12), 0 1px 3px rgba(15, 23, 42, 0.04);
-    --shadow-lg:     0 12px 32px -8px rgba(15, 23, 42, 0.15), 0 2px 6px rgba(15, 23, 42, 0.04);
-    --shadow-xl:     0 24px 56px -16px rgba(15, 23, 42, 0.22);
+    --ring:          rgba(15, 118, 110, 0.30);
+    --shadow-xs:     0 1px 2px rgba(20, 20, 18, 0.05);
+    --shadow-sm:     0 1px 3px rgba(20, 20, 18, 0.07), 0 1px 2px rgba(20, 20, 18, 0.05);
+    --shadow-md:     0 4px 12px -4px rgba(20, 20, 18, 0.14), 0 1px 3px rgba(20, 20, 18, 0.05);
+    --shadow-lg:     0 12px 32px -8px rgba(20, 20, 18, 0.18), 0 2px 6px rgba(20, 20, 18, 0.05);
+    --shadow-xl:     0 24px 56px -16px rgba(20, 20, 18, 0.24);
 
-    /* Radius */
-    --radius-sm:    8px;
-    --radius-md:    12px;
-    --radius-lg:    16px;
-    --radius-xl:    20px;
-    --radius-2xl:   24px;
+    /* Radius — squared off for a terminal feel */
+    --radius-sm:    4px;
+    --radius-md:    6px;
+    --radius-lg:    8px;
+    --radius-xl:    10px;
+    --radius-2xl:   12px;
     --radius-full:  999px;
 
     color-scheme: light;
   }
 
   .dark {
-    --bg:            #07080e;
-    --surface:       rgba(16, 18, 30, 0.82);
-    --surface-solid: #0f111e;
-    --surface-2:     #181b2b;
-    --surface-hover: #1e2236;
+    --bg:            #0c0c0d;
+    --surface:       rgba(22, 22, 23, 0.82);
+    --surface-solid: #161617;
+    --surface-2:     #1e1e20;
+    --surface-hover: #242427;
 
-    --border:        rgba(255, 255, 255, 0.07);
-    --border-strong: rgba(255, 255, 255, 0.13);
-    --border-accent: rgba(129, 140, 248, 0.25);
+    --border:        rgba(255, 255, 255, 0.10);
+    --border-strong: rgba(255, 255, 255, 0.18);
+    --border-accent: rgba(45, 212, 191, 0.30);
 
-    --text:          #f1f5f9;
-    --text-muted:    #cbd5e1;
-    --text-soft:     #94a3b8;
-    --text-dim:      #64748b;
+    --text:          #e9e9e7;
+    --text-muted:    rgba(233, 233, 231, 0.72);
+    --text-soft:     rgba(233, 233, 231, 0.55);
+    --text-dim:      rgba(233, 233, 231, 0.40);
 
-    --accent:        #818cf8;
-    --accent-hover:  #a5b4fc;
-    --accent-soft:   rgba(129, 140, 248, 0.14);
+    --accent:        #2dd4bf;
+    --accent-hover:  #5eead4;
+    --accent-soft:   rgba(45, 212, 191, 0.14);
     --accent-fg:     #05060a;
 
     --danger:        #f87171;
@@ -79,7 +80,7 @@
     --success:       #34d399;
     --warning:       #fbbf24;
 
-    --ring:          rgba(129, 140, 248, 0.38);
+    --ring:          rgba(45, 212, 191, 0.38);
     --shadow-xs:     0 1px 2px rgba(0, 0, 0, 0.20);
     --shadow-sm:     0 1px 3px rgba(0, 0, 0, 0.25), 0 1px 2px rgba(0, 0, 0, 0.15);
     --shadow-md:     0 4px 14px -4px rgba(0, 0, 0, 0.40), 0 1px 3px rgba(0, 0, 0, 0.20);
@@ -94,17 +95,13 @@
 
   body {
     min-height: 100vh;
-    background:
-      radial-gradient(ellipse at 0% 0%, rgba(99,102,241,0.10), transparent 34rem),
-      radial-gradient(ellipse at 100% 0%, rgba(14,165,233,0.07), transparent 30rem),
-      linear-gradient(180deg, var(--bg), color-mix(in srgb, var(--bg) 94%, #000 6%));
+    background: var(--bg);
     color: var(--text);
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     text-rendering: optimizeLegibility;
     -webkit-text-size-adjust: 100%;
-    font-feature-settings: 'cv11', 'ss01', 'ss04';
-    letter-spacing: -0.01em;
+    letter-spacing: 0;
     line-height: 1.5;
   }
 
@@ -128,7 +125,7 @@
   }
   ::-webkit-scrollbar-thumb:hover { background: var(--text-soft); background-clip: padding-box; }
 
-  h1, h2, h3 { letter-spacing: -0.035em; }
+  h1, h2, h3 { letter-spacing: -0.01em; }
   h1 { text-wrap: balance; }
   p { text-wrap: pretty; }
 
