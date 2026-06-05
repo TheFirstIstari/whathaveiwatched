@@ -28,6 +28,9 @@ export async function GET(req: NextRequest) {
     return Response.json({ error: 'Missing id or type' }, { status: 400 });
   }
 
+  // Title metadata barely changes — cache aggressively at CDN + browser.
+  const CACHE = 'public, max-age=3600, s-maxage=86400, stale-while-revalidate=604800';
+
   try {
     if (type === 'MOVIE') {
       const data = await tmdbGet(`/movie/${id}`);
@@ -37,7 +40,7 @@ export async function GET(req: NextRequest) {
         overview:     data.overview ?? '',
         posterPath:   data.poster_path ?? '',
         releaseDate:  data.release_date ?? '',
-      });
+      }, { headers: { 'Cache-Control': CACHE } });
     }
 
     if (type === 'TV_SHOW') {
@@ -70,7 +73,7 @@ export async function GET(req: NextRequest) {
         showPosterPath: show.poster_path ?? '',
         firstAirDate:  show.first_air_date ?? '',
         seasons,
-      });
+      }, { headers: { 'Cache-Control': CACHE } });
     }
 
     return Response.json({ error: `Unknown type: ${type}` }, { status: 400 });

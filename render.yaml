@@ -5,6 +5,7 @@ services:
     rootDir: frontend
     buildCommand: npm ci && npm run build
     startCommand: npm start
+    healthCheckPath: /api/health
     pullRequestPreviewsEnabled: false
     domains:
       - watched.tweak.wiki

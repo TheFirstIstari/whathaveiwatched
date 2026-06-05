@@ -1,15 +1,19 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  // Trim production JS: drop console.* (keep error/warn) in prod builds.
+  compiler: {
+    removeConsole: process.env.NODE_ENV === 'production' ? { exclude: ['error', 'warn'] } : false,
+  },
   async headers() {
     return [
+      // The board view is client-rendered and gets all data over the
+      // SpacetimeDB WebSocket; the HTML shell carries no per-user data, so
+      // we let the browser cache the shell briefly instead of no-store.
       {
-        source: '/((?!_next/static|_next/image|favicon.ico).*)',
+        source: '/board/:path*',
         headers: [
-          {
-            key: 'Cache-Control',
-            value: 'no-store, max-age=0, must-revalidate',
-          },
+          { key: 'Cache-Control', value: 'private, max-age=0, must-revalidate' },
         ],
       },
     ];

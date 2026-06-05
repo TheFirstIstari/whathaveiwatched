@@ -3,7 +3,11 @@ import { NextRequest, NextResponse } from 'next/server';
 export async function GET(req: NextRequest) {
   const q    = req.nextUrl.searchParams.get('q') ?? '';
   const type = req.nextUrl.searchParams.get('type') ?? 'all';
-  if (q.length < 2) return NextResponse.json({ results: [] });
+  // Search results are highly cacheable — same query returns the same titles.
+  const CACHE = 'public, max-age=60, s-maxage=300, stale-while-revalidate=86400';
+  if (q.length < 2) {
+    return NextResponse.json({ results: [] }, { headers: { 'Cache-Control': CACHE } });
+  }
 
   const endpoint = type === 'show'  ? 'search/tv'
                  : type === 'movie' ? 'search/movie'
@@ -26,7 +30,7 @@ export async function GET(req: NextRequest) {
         posterPath: r.poster_path ?? null,
         media_type: r.media_type ?? (type === 'show' ? 'tv' : type === 'movie' ? 'movie' : 'movie'),
       }));
-    return NextResponse.json({ results });
+    return NextResponse.json({ results }, { headers: { 'Cache-Control': CACHE } });
   } catch {
     return NextResponse.json({ results: [], error: 'Search failed' }, { status: 500 });
   }
