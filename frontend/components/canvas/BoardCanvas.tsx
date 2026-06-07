@@ -1,6 +1,6 @@
 'use client';
 import { useRef, useState, useCallback, useEffect, useMemo } from 'react';
-import { Stage, Layer } from 'react-konva';
+import { Stage, Layer, Circle } from 'react-konva';
 import Konva from 'konva';
 import { useCanvasCamera } from '@/lib/hooks/useCanvasCamera';
 import { computeLayout, NodeLayout } from '@/lib/canvas/layout';
@@ -78,11 +78,24 @@ export function BoardCanvas({
   const isPanning = useRef(false);
   const panOrigin = useRef({ x: 0, y: 0, cx: 0, cy: 0 });
 
+  // Keyboard shortcuts
+  useEffect(() => {
+    const handleKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && drawerOpen) {
+        setDrawerOpen(false);
+      }
+    };
+    window.addEventListener('keydown', handleKey);
+    return () => window.removeEventListener('keydown', handleKey);
+  }, [drawerOpen]);
+
   useEffect(() => {
     const update = () => setWindowSize({ width: window.innerWidth, height: window.innerHeight });
     update();
-    window.addEventListener('resize', update);
-    return () => window.removeEventListener('resize', update);
+    let timer: ReturnType<typeof setTimeout>;
+    const debounced = () => { clearTimeout(timer); timer = setTimeout(update, 100); };
+    window.addEventListener('resize', debounced);
+    return () => { clearTimeout(timer); window.removeEventListener('resize', debounced); };
   }, []);
 
   // Notify parent of scale changes
@@ -259,6 +272,27 @@ export function BoardCanvas({
   // Suppress unused variable warning for boardId (reserved for future use)
   void boardId;
 
+  // Dot grid background — only render visible dots for performance
+  const dotGrid = useMemo(() => {
+    const dotColor = theme['canvas.dot'];
+    const spacing = 40;
+    const dotR = 1.2;
+    // Calculate visible area in canvas coordinates
+    const left   = -x / scale;
+    const top    = -y / scale;
+    const right  = left + windowSize.width / scale;
+    const bottom = top  + windowSize.height / scale;
+    const startX = Math.floor(left / spacing) * spacing;
+    const startY = Math.floor(top / spacing) * spacing;
+    const dots: Array<{ x: number; y: number }> = [];
+    for (let dx = startX; dx <= right; dx += spacing) {
+      for (let dy = startY; dy <= bottom; dy += spacing) {
+        dots.push({ x: dx, y: dy });
+      }
+    }
+    return { dots, dotColor, dotR };
+  }, [theme, x, y, scale, windowSize]);
+
   return (
     <>
       <Stage
@@ -274,11 +308,15 @@ export function BoardCanvas({
         onDblClick={handleDblClick}
         style={{ cursor: 'grab', background: theme['canvas.bg'] }}
       >
-        {/* Background layer */}
-        <Layer name="bg-layer" />
+        {/* Background layer: dot grid */}
+        <Layer name="bg-layer" listening={false}>
+          {dotGrid.dots.map((d, i) => (
+            <Circle key={i} x={d.x} y={d.y} radius={dotGrid.dotR} fill={dotGrid.dotColor} listening={false} />
+          ))}
+        </Layer>
 
         {/* Edge layer */}
-        <EdgeLayer nodes={nodeLayouts} />
+        <EdgeLayer nodes={nodeLayouts} theme={theme} />
 
         {/* Node layer */}
         <Layer name="node-layer">

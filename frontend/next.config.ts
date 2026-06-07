@@ -16,6 +16,20 @@ const nextConfig: NextConfig = {
           { key: 'Cache-Control', value: 'private, max-age=0, must-revalidate' },
         ],
       },
+      // Static-ish pages (no SpacetimeDB useTable hooks) — cache the HTML shell
+      // for 5 min at CDN, 60s in browser. Data arrives client-side.
+      {
+        source: '/signin',
+        headers: [
+          { key: 'Cache-Control', value: 'public, max-age=60, s-maxage=300, stale-while-revalidate=86400' },
+        ],
+      },
+      {
+        source: '/boards/new',
+        headers: [
+          { key: 'Cache-Control', value: 'public, max-age=60, s-maxage=300, stale-while-revalidate=86400' },
+        ],
+      },
     ];
   },
 };

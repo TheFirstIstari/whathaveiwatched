@@ -1,7 +1,6 @@
 'use client';
 
-export const dynamic = 'force-dynamic';
-
+// No SpacetimeDB useTable hooks — only useReducer. No force-dynamic needed.
 import { useEffect, useState } from 'react';
 import { useRouter, useSearchParams, useParams } from 'next/navigation';
 import { useReducer } from 'spacetimedb/react';

@@ -19,6 +19,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <script dangerouslySetInnerHTML={{ __html:
           `(function(){try{var s=localStorage.getItem('ihw_theme');if(s==='dark')document.documentElement.classList.add('dark')}catch(e){}})();`
         }} />
+        {/* Preconnect to TMDB image CDN — posters load from here */}
+        <link rel="preconnect" href="https://image.tmdb.org" />
+        <link rel="dns-prefetch" href="https://image.tmdb.org" />
       </head>
       <body className={jetbrainsMono.className}>
         <Providers>{children}</Providers>

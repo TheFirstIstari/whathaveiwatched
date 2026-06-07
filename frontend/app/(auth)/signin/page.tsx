@@ -6,6 +6,8 @@
  * No OAuth needed. SpacetimeDB issues an anonymous identity + token on first
  * connection. We just ask for a display name so we can call register_owner.
  * The token is persisted in localStorage by the SpacetimeDB SDK.
+ *
+ * No SpacetimeDB hooks used here — no force-dynamic needed.
  */
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
@@ -49,10 +51,10 @@ export default function SignInPage() {
   return (
     <div className="relative flex min-h-screen items-center justify-center p-4">
       <div className="absolute top-3 right-3"><ThemeToggle /></div>
-      <div className="w-full max-w-sm ui-card p-8 space-y-7">
+      <div className="w-full max-w-sm ui-card p-8 space-y-7 animate-[fade-in-up_0.4s_ease-out_both]">
         <div className="text-center space-y-2">
           <div className="inline-flex items-center gap-2.5 mb-1">
-            <span className="w-8 h-8 rounded-[var(--radius-lg)] bg-[var(--accent)] shadow-[var(--shadow-md)]" aria-hidden />
+            <span className="w-8 h-8 rounded-[var(--radius-lg)] bg-[var(--accent)] shadow-[var(--shadow-md)] flex items-center justify-center text-[var(--accent-fg)] text-sm font-bold" aria-hidden>▸</span>
             <span className="text-lg font-semibold tracking-tight text-[var(--text)]">IHaveWatched</span>
           </div>
           <p className="text-[var(--text-soft)] text-sm">

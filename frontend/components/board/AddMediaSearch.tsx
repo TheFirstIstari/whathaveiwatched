@@ -27,6 +27,7 @@ export function AddMediaSearch({ boardId, existingTmdbIds, onImport }: Props) {
   const [activeIdx, setActiveIdx] = useState(-1);
   const [open, setOpen]           = useState(false);
   const inputRef                  = useRef<HTMLInputElement>(null);
+  // boardId reserved for future board-scoped search
   void boardId;
 
   useEffect(() => {
@@ -41,6 +42,7 @@ export function AddMediaSearch({ boardId, existingTmdbIds, onImport }: Props) {
         setActiveIdx(-1);
       } catch {
         setResults([]);
+        toast.error('Search failed — try again');
       } finally { setLoading(false); }
     }, 300);
     return () => clearTimeout(timer);

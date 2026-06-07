@@ -21,8 +21,10 @@ function BoardSettingsInner() {
   const [title, setTitle]         = useState('');
   const [description, setDesc]    = useState('');
   const [sharingMode, setSharing] = useState<'PRIVATE' | 'PUBLIC'>('PRIVATE');
+  const [orderingMode, setOrdering] = useState<'RELEASE_DATE' | 'CHRONO'>('RELEASE_DATE');
   const [editLoading, setEL]      = useState(false);
   const [deleteConfirm, setDC]    = useState(false);
+  const [resetConfirm, setRC]     = useState(false);
   const [copied, setCopied]       = useState(false);
 
   useEffect(() => {
@@ -41,6 +43,7 @@ function BoardSettingsInner() {
   const deleteBoard        = useReducer(reducers.deleteBoard);
   const regenerateInvite   = useReducer(reducers.regenerateInvite);
   const removeParticipant  = useReducer(reducers.removeParticipant);
+  const resetProgress      = useReducer(reducers.resetProgress);
 
   const board = boards.find(b => b.id === boardId);
   const boardParticipants = participants.filter(p => p.boardId === boardId);
@@ -63,6 +66,7 @@ function BoardSettingsInner() {
     setTitle(board.title);
     setDesc(board.description);
     setSharing(board.sharingMode as 'PRIVATE' | 'PUBLIC');
+    setOrdering(board.orderingMode as 'RELEASE_DATE' | 'CHRONO');
   }, [board]);
 
   const inviteLink = board
@@ -78,7 +82,7 @@ function BoardSettingsInner() {
     if (!title.trim()) { toast.error('Title is required'); return; }
     setEL(true);
     try {
-      await updateBoard({ boardId, title: title.trim(), description: description.trim(), sharingMode, orderingMode: board?.orderingMode ?? 'RELEASE_DATE' });
+      await updateBoard({ boardId, title: title.trim(), description: description.trim(), sharingMode, orderingMode });
       toast.success('Board updated');
     } catch (err: any) {
       toast.error(err?.message ?? 'Update failed');
@@ -199,6 +203,32 @@ function BoardSettingsInner() {
                 );
               })}
             </fieldset>
+            <fieldset className="space-y-1">
+              <legend className="block text-xs font-medium text-[var(--text-muted)] tracking-wide mb-2">
+                Ordering
+              </legend>
+              {([
+                { mode: 'RELEASE_DATE' as const, label: 'Release date', desc: 'Sort by when media was released' },
+                { mode: 'CHRONO'       as const, label: 'Chronological', desc: 'Sort by in-universe timeline' },
+              ]).map(({ mode, label, desc }) => {
+                const checked = orderingMode === mode;
+                return (
+                  <label key={mode}
+                         className={`flex items-start gap-3 p-3 rounded-[var(--radius-md)] cursor-pointer border transition-colors
+                                     ${checked
+                                       ? 'border-[var(--border-accent)] bg-[var(--accent-soft)]'
+                                       : 'border-[var(--border)] hover:bg-[var(--surface-2)]'}`}>
+                    <input type="radio" name="ordering" value={mode}
+                           checked={checked} onChange={() => setOrdering(mode)}
+                           className="mt-0.5 accent-[var(--accent)]" />
+                    <div>
+                      <p className="text-sm font-medium text-[var(--text)] leading-tight">{label}</p>
+                      <p className="text-xs text-[var(--text-soft)] mt-0.5">{desc}</p>
+                    </div>
+                  </label>
+                );
+              })}
+            </fieldset>
             <div className="pt-1">
               <Button type="submit" disabled={editLoading} size="sm">
                 {editLoading ? 'Saving…' : 'Save changes'}
@@ -263,6 +293,30 @@ function BoardSettingsInner() {
               </li>
             ))}
           </ul>
+        </SettingsSection>
+
+        {/* Reset progress */}
+        <SettingsSection title="Reset progress" description="Clear your watch state for this board.">
+          {resetConfirm ? (
+            <div className="space-y-3 p-4 rounded-[var(--radius-md)] bg-[var(--warning)]/10 border border-[var(--warning)]/20">
+              <p className="text-sm text-[var(--text)] font-medium">Reset all your watch progress on this board?</p>
+              <p className="text-xs text-[var(--text-soft)]">This only affects your data — other members keep theirs.</p>
+              <div className="flex gap-2">
+                <Button variant="outline" size="sm" onClick={() => setRC(false)}>Cancel</Button>
+                <Button size="sm" onClick={async () => {
+                  try {
+                    await resetProgress({ boardId });
+                    toast.success('Progress reset');
+                    setRC(false);
+                  } catch (err: any) {
+                    toast.error(err?.message ?? 'Failed');
+                  }
+                }}>Yes, reset</Button>
+              </div>
+            </div>
+          ) : (
+            <Button variant="outline" size="sm" onClick={() => setRC(true)}>Reset my progress</Button>
+          )}
         </SettingsSection>
 
         {/* Danger zone */}

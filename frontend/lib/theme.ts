@@ -2,6 +2,7 @@
 // Watch-state chips (watched/partial/unwatched) kept color-coded for usability.
 export const LIGHT_THEME = {
   'canvas.bg': '#E8E8E5',
+  'canvas.dot': 'rgba(20,20,18,0.08)',
   'card.bg': '#F2F2EF',
   'card.border': 'rgba(20,20,18,0.14)',
   'card.borderHover': '#0F766E',
@@ -21,6 +22,7 @@ export const LIGHT_THEME = {
 
 export const DARK_THEME = {
   'canvas.bg': '#0C0C0D',
+  'canvas.dot': 'rgba(255,255,255,0.05)',
   'card.bg': '#161617',
   'card.border': 'rgba(255,255,255,0.12)',
   'card.borderHover': '#2DD4BF',

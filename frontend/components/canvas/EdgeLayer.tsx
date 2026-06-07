@@ -1,12 +1,14 @@
 'use client';
-import { Layer, Arrow } from 'react-konva';
+import { Layer, Arrow, Line } from 'react-konva';
 import { NodeLayout, nodeDimensions } from '@/lib/canvas/layout';
+import { ThemeTokens } from '@/lib/theme';
 
 interface Props {
   nodes: NodeLayout[];
+  theme: ThemeTokens;
 }
 
-export function EdgeLayer({ nodes }: Props) {
+export function EdgeLayer({ nodes, theme }: Props) {
   // Group nodes by lane, sort by chronoOrder, draw edges between consecutive
   const byLane = new Map<number, NodeLayout[]>();
   nodes.forEach(n => {
@@ -16,6 +18,7 @@ export function EdgeLayer({ nodes }: Props) {
     byLane.set(lane, arr);
   });
 
+  const edgeColor = theme['card.border'];
   const edges: Array<{ x1: number; y1: number; x2: number; y2: number }> = [];
   byLane.forEach(laneNodes => {
     const sorted = [...laneNodes].sort((a, b) => a.chronoOrder - b.chronoOrder);
@@ -34,17 +37,17 @@ export function EdgeLayer({ nodes }: Props) {
   });
 
   return (
-    <Layer name="edge-layer">
+    <Layer name="edge-layer" listening={false}>
       {edges.map((e, i) => (
         <Arrow
           key={i}
           points={[e.x1, e.y1, e.x2, e.y2]}
-          stroke="#94a3b8"
-          strokeWidth={1}
-          opacity={0.3}
-          pointerLength={6}
-          pointerWidth={5}
-          fill="#94a3b8"
+          stroke={edgeColor}
+          strokeWidth={1.2}
+          opacity={0.35}
+          pointerLength={8}
+          pointerWidth={6}
+          fill={edgeColor}
           listening={false}
         />
       ))}

@@ -2,7 +2,7 @@
 
 export const dynamic = 'force-dynamic';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useTable, useReducer } from 'spacetimedb/react';
 import { tables, reducers } from '@/src/module_bindings';
@@ -21,6 +21,19 @@ function DashboardInner() {
   const [query, setQuery] = useState('');
   const [sortBy, setSortBy] = useState<'recent' | 'name' | 'titles' | 'members'>('recent');
   const [visibility, setVisibility] = useState<'all' | 'public' | 'private'>('all');
+  const searchRef = useRef<HTMLInputElement>(null);
+
+  // Keyboard shortcut: / focuses search
+  useEffect(() => {
+    const handleKey = (e: KeyboardEvent) => {
+      if (e.key === '/' && !['INPUT', 'TEXTAREA', 'SELECT'].includes((e.target as HTMLElement)?.tagName)) {
+        e.preventDefault();
+        searchRef.current?.focus();
+      }
+    };
+    window.addEventListener('keydown', handleKey);
+    return () => window.removeEventListener('keydown', handleKey);
+  }, []);
 
   useEffect(() => {
     const name = getDisplayName();
@@ -33,6 +46,7 @@ function DashboardInner() {
   const [allParticipants] = useTable(tables.participant);
   const [allMediaItems]   = useTable(tables.media_item);
   const [allWatchAggs]    = useTable(tables.watch_aggregate);
+  const [allAccounts]     = useTable(tables.account);
   const registerOwner     = useReducer(reducers.registerOwner);
 
   useEffect(() => {
@@ -58,34 +72,85 @@ function DashboardInner() {
     [allBoards, joinedBoardIds]
   );
 
-  const itemCountForBoard = (boardId: bigint) =>
-    allMediaItems.filter(m => m.boardId === boardId && (m.mediaType === 'FILM' || m.mediaType === 'SHOW')).length;
+  // Memoized lookup maps — avoids O(n) filter per board per render
+  const itemCountMap = useMemo(() => {
+    const m = new Map<bigint, number>();
+    allMediaItems.forEach(item => {
+      if (item.mediaType === 'FILM' || item.mediaType === 'SHOW') {
+        m.set(item.boardId, (m.get(item.boardId) ?? 0) + 1);
+      }
+    });
+    return m;
+  }, [allMediaItems]);
 
-  const participantCountForBoard = (boardId: bigint) =>
-    allParticipants.filter(p => p.boardId === boardId).length;
+  const participantCountMap = useMemo(() => {
+    const m = new Map<bigint, number>();
+    allParticipants.forEach(p => {
+      m.set(p.boardId, (m.get(p.boardId) ?? 0) + 1);
+    });
+    return m;
+  }, [allParticipants]);
 
-  // Top-level (FILM/SHOW) item ids per board — episodes/seasons roll up into these.
-  const topLevelIdsForBoard = (boardId: bigint) =>
-    new Set(
-      allMediaItems
-        .filter(m => m.boardId === boardId && (m.mediaType === 'FILM' || m.mediaType === 'SHOW'))
-        .map(m => m.id)
-    );
+  const posterMap = useMemo(() => {
+    const m = new Map<bigint, string>();
+    allMediaItems.forEach(item => {
+      if ((item.mediaType === 'FILM' || item.mediaType === 'SHOW') && item.posterUrl && !m.has(item.boardId)) {
+        m.set(item.boardId, item.posterUrl);
+      }
+    });
+    return m;
+  }, [allMediaItems]);
 
-  // Current user's watch progress across a board (watched episodes/films / total).
-  const progressForBoard = (boardId: bigint): { pct: number; total: number } => {
-    if (!identityHex) return { pct: 0, total: 0 };
-    const topIds = topLevelIdsForBoard(boardId);
-    let watched = 0, total = 0;
-    for (const a of allWatchAggs) {
-      if (a.boardId !== boardId) continue;
-      if (a.watcherIdentity.toHexString() !== identityHex) continue;
-      if (!topIds.has(a.mediaItemId)) continue;
-      watched += a.watchedCount;
-      total += a.totalCount;
-    }
-    return { pct: total > 0 ? Math.round((watched / total) * 100) : 0, total };
-  };
+  const ownerNameMap = useMemo(() => {
+    const m = new Map<string, string>();
+    allAccounts.forEach(a => m.set(a.ownerIdentity.toHexString(), a.displayName));
+    return m;
+  }, [allAccounts]);
+
+  const progressMap = useMemo(() => {
+    if (!identityHex) return new Map<bigint, { pct: number; total: number }>();
+    // Build top-level ids per board
+    const topIds = new Map<bigint, Set<bigint>>();
+    allMediaItems.forEach(item => {
+      if (item.mediaType === 'FILM' || item.mediaType === 'SHOW') {
+        let s = topIds.get(item.boardId);
+        if (!s) { s = new Set(); topIds.set(item.boardId, s); }
+        s.add(item.id);
+      }
+    });
+    const m = new Map<bigint, { pct: number; total: number }>();
+    allWatchAggs.forEach(a => {
+      if (a.watcherIdentity.toHexString() !== identityHex) return;
+      const ids = topIds.get(a.boardId);
+      if (!ids || !ids.has(a.mediaItemId)) return;
+      const cur = m.get(a.boardId) ?? { pct: 0, total: 0 };
+      cur.total += a.totalCount;
+      // Recalc pct at end
+      m.set(a.boardId, { pct: 0, total: cur.total });
+    });
+    // Second pass: compute watched count
+    allWatchAggs.forEach(a => {
+      if (a.watcherIdentity.toHexString() !== identityHex) return;
+      const ids = topIds.get(a.boardId);
+      if (!ids || !ids.has(a.mediaItemId)) return;
+      const cur = m.get(a.boardId);
+      if (!cur) return;
+      cur.pct += a.watchedCount; // temporarily store watched sum in pct
+    });
+    // Finalize pct
+    const result = new Map<bigint, { pct: number; total: number }>();
+    m.forEach((v, k) => {
+      const watched = v.pct; // watched sum was temporarily stored here
+      result.set(k, { pct: v.total > 0 ? Math.round((watched / v.total) * 100) : 0, total: v.total });
+    });
+    return result;
+  }, [allWatchAggs, allMediaItems, identityHex]);
+
+  const itemCountForBoard = (boardId: bigint) => itemCountMap.get(boardId) ?? 0;
+  const participantCountForBoard = (boardId: bigint) => participantCountMap.get(boardId) ?? 0;
+  const progressForBoard = (boardId: bigint) => progressMap.get(boardId) ?? { pct: 0, total: 0 };
+  const posterForBoard = (boardId: bigint) => posterMap.get(boardId) ?? null;
+  const ownerForBoard = (board: BoardRow) => ownerNameMap.get(board.ownerIdentity.toHexString()) ?? 'Owner';
 
   const totalTitles = myBoards.reduce((sum, b) => sum + itemCountForBoard(b.id), 0);
   const totalMembers = myBoards.reduce((sum, b) => sum + participantCountForBoard(b.id), 0);
@@ -140,6 +205,13 @@ function DashboardInner() {
             <Button variant="ghost" size="sm" onClick={() => {
               clearIdentityToken();
               localStorage.removeItem('ihw_display_name');
+              // Clear per-board participant state
+              const keys: string[] = [];
+              for (let i = 0; i < localStorage.length; i++) {
+                const k = localStorage.key(i);
+                if (k?.startsWith('ihw_participant_')) keys.push(k);
+              }
+              keys.forEach(k => localStorage.removeItem(k));
               router.replace('/signin');
             }}>
               Switch user
@@ -148,7 +220,7 @@ function DashboardInner() {
         </div>
       </header>
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-10">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-10 animate-[fade-in-up_0.4s_ease-out_both]">
         {/* Hero Section */}
         <section className="grid lg:grid-cols-[1fr_22rem] gap-5 mb-10">
           <div className="ui-card p-6 sm:p-8 overflow-hidden relative">
@@ -182,6 +254,7 @@ function DashboardInner() {
             query={query} onQuery={setQuery}
             sortBy={sortBy} onSort={setSortBy}
             visibility={visibility} onVisibility={setVisibility}
+            searchRef={searchRef}
           />
         )}
 
@@ -201,18 +274,16 @@ function DashboardInner() {
             ) : visibleMyBoards.length === 0 ? (
               <NoMatches onClear={() => { setQuery(''); setVisibility('all'); }} />
             ) : (
-              <BoardGrid boards={visibleMyBoards} itemCount={itemCountForBoard} participantCount={participantCountForBoard} progress={progressForBoard} onOpen={id => router.push(`/board/${id}`)} />
+              <BoardGrid boards={visibleMyBoards} itemCount={itemCountForBoard} participantCount={participantCountForBoard} progress={progressForBoard} posterForBoard={posterForBoard} ownerForBoard={ownerForBoard} onOpen={id => router.push(`/board/${id}`)} />
             )}
           </BoardSection>
 
           {joinedBoards.length > 0 && (
             <BoardSection title="Joined boards" subtitle="Shared with you">
               {visibleJoinedBoards.length === 0 ? (
-                <p className="text-sm text-[var(--text-dim)]">
-                  {isFiltering ? 'No joined boards match your search.' : 'No joined boards.'}
-                </p>
+                <NoMatches onClear={() => { setQuery(''); setVisibility('all'); }} />
               ) : (
-                <BoardGrid boards={visibleJoinedBoards} itemCount={itemCountForBoard} participantCount={participantCountForBoard} progress={progressForBoard} onOpen={id => router.push(`/board/${id}`)} />
+                <BoardGrid boards={visibleJoinedBoards} itemCount={itemCountForBoard} participantCount={participantCountForBoard} progress={progressForBoard} posterForBoard={posterForBoard} ownerForBoard={ownerForBoard} onOpen={id => router.push(`/board/${id}`)} />
               )}
             </BoardSection>
           )}
@@ -226,6 +297,7 @@ interface BoardRow {
   title: string;
   description: string;
   sharingMode: string;
+  ownerIdentity: { toHexString: () => string };
 }
 
 function StatCard({ label, value }: { label: string; value: number }) {
@@ -256,11 +328,12 @@ type SortBy = 'recent' | 'name' | 'titles' | 'members';
 type Visibility = 'all' | 'public' | 'private';
 
 function Toolbar({
-  query, onQuery, sortBy, onSort, visibility, onVisibility,
+  query, onQuery, sortBy, onSort, visibility, onVisibility, searchRef,
 }: {
   query: string; onQuery: (v: string) => void;
   sortBy: SortBy; onSort: (v: SortBy) => void;
   visibility: Visibility; onVisibility: (v: Visibility) => void;
+  searchRef: React.RefObject<HTMLInputElement | null>;
 }) {
   const segBtn = (active: boolean) =>
     `px-2.5 py-1.5 text-xs transition-colors ${
@@ -275,9 +348,10 @@ function Toolbar({
           <circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/>
         </svg>
         <input
+          ref={searchRef}
           value={query}
           onChange={e => onQuery(e.target.value)}
-          placeholder="Search boards…"
+          placeholder="Search boards…  /"
           className="ui-input !pl-9"
           aria-label="Search boards"
         />
@@ -334,12 +408,14 @@ function EmptyState({ title, description, cta }: { title: string; description: s
 }
 
 function BoardGrid({
-  boards, itemCount, participantCount, progress, onOpen,
+  boards, itemCount, participantCount, progress, posterForBoard, ownerForBoard, onOpen,
 }: {
   boards: BoardRow[];
   itemCount: (id: bigint) => number;
   participantCount: (id: bigint) => number;
   progress: (id: bigint) => { pct: number; total: number };
+  posterForBoard: (id: bigint) => string | null;
+  ownerForBoard: (board: BoardRow) => string;
   onOpen: (id: bigint) => void;
 }) {
   return (
@@ -348,67 +424,82 @@ function BoardGrid({
         const items = itemCount(board.id);
         const parts = participantCount(board.id);
         const prog = progress(board.id);
+        const poster = posterForBoard(board.id);
+        const owner = ownerForBoard(board);
         const isPublic = board.sharingMode === 'PUBLIC';
         return (
           <button
             key={String(board.id)}
             onClick={() => onOpen(board.id)}
-            className="ui-card group text-left p-4 sm:p-5 transition-all duration-150
+            className="ui-card group text-left transition-all duration-150
                        hover:border-[var(--border-strong)] hover:-translate-y-0.5
-                       hover:shadow-[var(--shadow-lg)] cursor-pointer"
+                       hover:shadow-[var(--shadow-lg)] cursor-pointer overflow-hidden"
           >
-            <div className="flex items-start justify-between gap-2 mb-2">
-              <h3 className="font-semibold text-[var(--text)] truncate text-sm leading-snug">
-                {board.title}
-              </h3>
-              <span className={`shrink-0 ui-badge
-                                ${isPublic
-                                  ? 'bg-[var(--accent-soft)] text-[var(--accent)]'
-                                  : 'bg-[var(--surface-2)] text-[var(--text-dim)]'}`}>
-                {isPublic ? 'Public' : 'Private'}
-              </span>
-            </div>
-            {board.description ? (
-              <p className="text-xs text-[var(--text-soft)] leading-relaxed line-clamp-2 mb-4 min-h-[2rem]">
-                {board.description}
-              </p>
-            ) : (
-              <p className="text-xs text-[var(--text-dim)] italic mb-4 min-h-[2rem]">No description</p>
-            )}
-            {prog.total > 0 && (
-              <div className="mb-4">
-                <div className="flex items-center justify-between mb-1.5">
-                  <span className="text-[10px] uppercase tracking-wider text-[var(--text-dim)]">Your progress</span>
-                  <span className="text-[11px] font-medium tabular-nums text-[var(--text-soft)]">{prog.pct}%</span>
-                </div>
-                <div className="h-1.5 rounded-[var(--radius-full)] bg-[var(--surface-2)] overflow-hidden">
-                  <div
-                    className="h-full rounded-[var(--radius-full)] bg-[var(--accent)] transition-[width] duration-300"
-                    style={{ width: `${prog.pct}%` }}
-                  />
-                </div>
+            {/* Poster banner */}
+            {poster && (
+              <div className="relative h-28 overflow-hidden">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={poster} alt="" className="w-full h-full object-cover" />
+                <div className="absolute inset-0 bg-gradient-to-t from-[var(--surface)] via-transparent to-transparent" />
               </div>
             )}
-            <div className="flex items-center gap-3 text-[11px] text-[var(--text-dim)] pt-3 border-t border-[var(--border)]">
-              <span className="inline-flex items-center gap-1.5">
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="text-[var(--text-dim)] opacity-60">
-                  <rect x="2" y="3" width="20" height="14" rx="2"/>
-                  <path d="M8 21h8M12 17v4"/>
-                </svg>
-                <span className="text-[var(--text-soft)] font-medium tabular-nums">{items}</span>
-                <span>{items === 1 ? 'title' : 'titles'}</span>
-              </span>
-              <span className="opacity-30">·</span>
-              <span className="inline-flex items-center gap-1.5">
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="text-[var(--text-dim)] opacity-60">
-                  <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
-                  <circle cx="9" cy="7" r="4"/>
-                  <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
-                  <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
-                </svg>
-                <span className="text-[var(--text-soft)] font-medium tabular-nums">{parts}</span>
-                <span>{parts === 1 ? 'member' : 'members'}</span>
-              </span>
+            <div className={`p-4 sm:p-5 ${poster ? 'pt-2' : ''}`}>
+              <div className="flex items-start justify-between gap-2 mb-1.5">
+                <h3 className="font-semibold text-[var(--text)] truncate text-sm leading-snug">
+                  {board.title}
+                </h3>
+                <span className={`shrink-0 ui-badge
+                                  ${isPublic
+                                    ? 'bg-[var(--accent-soft)] text-[var(--accent)]'
+                                    : 'bg-[var(--surface-2)] text-[var(--text-dim)]'}`}>
+                  {isPublic ? 'Public' : 'Private'}
+                </span>
+              </div>
+              <p className="text-[11px] text-[var(--text-dim)] mb-2">
+                by {owner}
+              </p>
+              {board.description ? (
+                <p className="text-xs text-[var(--text-soft)] leading-relaxed line-clamp-2 mb-3 min-h-[2rem]">
+                  {board.description}
+                </p>
+              ) : (
+                <p className="text-xs text-[var(--text-dim)] italic mb-3 min-h-[2rem]">No description</p>
+              )}
+              {prog.total > 0 && (
+                <div className="mb-3">
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="text-[10px] uppercase tracking-wider text-[var(--text-dim)]">Your progress</span>
+                    <span className="text-[11px] font-medium tabular-nums text-[var(--text-soft)]">{prog.pct}%</span>
+                  </div>
+                  <div className="h-1.5 rounded-[var(--radius-full)] bg-[var(--surface-2)] overflow-hidden">
+                    <div
+                      className="h-full rounded-[var(--radius-full)] bg-[var(--accent)] transition-[width] duration-300"
+                      style={{ width: `${prog.pct}%` }}
+                    />
+                  </div>
+                </div>
+              )}
+              <div className="flex items-center gap-3 text-[11px] text-[var(--text-dim)] pt-2.5 border-t border-[var(--border)]">
+                <span className="inline-flex items-center gap-1.5">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="text-[var(--text-dim)] opacity-60">
+                    <rect x="2" y="3" width="20" height="14" rx="2"/>
+                    <path d="M8 21h8M12 17v4"/>
+                  </svg>
+                  <span className="text-[var(--text-soft)] font-medium tabular-nums">{items}</span>
+                  <span>{items === 1 ? 'title' : 'titles'}</span>
+                </span>
+                <span className="opacity-30">·</span>
+                <span className="inline-flex items-center gap-1.5">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="text-[var(--text-dim)] opacity-60">
+                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                    <circle cx="9" cy="7" r="4"/>
+                    <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+                    <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+                  </svg>
+                  <span className="text-[var(--text-soft)] font-medium tabular-nums">{parts}</span>
+                  <span>{parts === 1 ? 'member' : 'members'}</span>
+                </span>
+              </div>
             </div>
           </button>
         );
