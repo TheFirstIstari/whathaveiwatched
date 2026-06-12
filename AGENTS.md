@@ -87,3 +87,10 @@ Cinematic terminal palette — warm stone neutrals + teal accent, JetBrains Mono
 - Context menu items support `dividerAfter` prop and hover highlight
 - Drill-down drawer has `hideWatched` toggle and episode number labels (S01E03 format)
 - Drawer is mobile-responsive: `w-full sm:w-[24rem]`
+- Board cover gradient fallback for boards without media items
+- Mobile overflow menu on board page (three-dot menu with share, settings, dark mode)
+- Participant-facing settings: reset progress + leave board in danger zone
+- Export board as PNG button in board header (uses Konva stage.toDataURL)
+- Fandom chronology presets: MCU (release + chronological), Star Wars (Machete + Full), LotR, Harry Potter, James Bond
+- Animated zoom transitions between EPISODE/SEASON/SHOW levels (Konva Tween, 280ms ease-out)
+- Parallel lane auto-layout for chronologically concurrent titles
