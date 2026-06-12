@@ -1,7 +1,5 @@
 'use client';
 
-export const dynamic = 'force-dynamic';
-
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter, useParams, useSearchParams } from 'next/navigation';
 import { useTable, useReducer } from 'spacetimedb/react';
@@ -10,6 +8,7 @@ import { getDisplayName, getIdentityHex, getParticipantState } from '@/lib/db/co
 import { ConnectionBanner } from '@/components/ui/ConnectionBanner';
 import { Button } from '@/components/ui/Button';
 import { ThemeToggle } from '@/components/ui/ThemeToggle';
+import Konva from 'konva';
 import { BoardCanvas, type BoardMediaItem, type BoardParticipant, type WatchEntryData, type WatchAggData, type FitViewFn } from '@/components/canvas/BoardCanvas';
 import { AddMediaSearch } from '@/components/board/AddMediaSearch';
 import { importMedia } from '@/lib/db/importMedia';
@@ -25,23 +24,24 @@ function BoardPageInner() {
   const boardId   = BigInt(params.boardId as string);
   const isPublicView = searchParams.get('view') === 'public';
   const { theme } = useTheme();
-  const { getConnection } = useSpacetimeDB();
+  const { getConnection, identity } = useSpacetimeDB();
+  // Reactive identity — empty until the SDK connects, so don't snapshot it once.
+  const identityHex = identity?.toHexString() ?? getIdentityHex();
 
-  const [identityHex, setIdentityHex_] = useState<string | null>(null);
   const [authMode, setAuthMode]         = useState<'owner' | 'participant' | 'public' | null>(null);
   const [mounted, setMounted]           = useState(false);
   const [canvasScale, setCanvasScale]   = useState(1);
+  const [overflowOpen, setOverflowOpen] = useState(false);
+  const overflowRef = useRef<HTMLDivElement>(null);
   const fitViewRef = useRef<FitViewFn | null>(null);
+  const stageCanvasRef = useRef<Konva.Stage | null>(null);
 
   useEffect(() => {
     setMounted(true);
-    const hex  = getIdentityHex();
-    setIdentityHex_(hex);
-
     const name = getDisplayName();
     const participant = getParticipantState(boardId);
-    if (name && hex) {
-      setAuthMode('owner');   // tentative; refined after board loads
+    if (name) {
+      setAuthMode('owner');   // tentative; refined to owner/participant/public after board loads
     } else if (participant) {
       setAuthMode('participant');
     } else if (isPublicView) {
@@ -205,7 +205,26 @@ function BoardPageInner() {
 
   const zoomLabel = getZoomLevel(canvasScale);
 
-  if (!mounted || !authMode) return null;
+  if (!mounted) return null;
+  if (!authMode) {
+    // Still determining auth — show a loading state instead of blank
+    return (
+      <div className="h-screen flex flex-col overflow-hidden" style={{ background: theme['card.bg'] }}>
+        <header className="border-b border-[var(--border)] bg-[var(--surface)]/75 backdrop-blur-xl px-3 sm:px-4 h-12 flex items-center gap-2 z-10 shrink-0">
+          <div className="h-4 w-28 ui-skeleton" />
+        </header>
+        <main className="flex-1 flex items-center justify-center">
+          <div className="flex items-center gap-2.5 text-[var(--text-dim)]">
+            <svg className="animate-spin w-4 h-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+            </svg>
+            <p className="text-sm">Connecting…</p>
+          </div>
+        </main>
+      </div>
+    );
+  }
 
   return (
     <div className="h-screen flex flex-col overflow-hidden" style={{ background: theme['card.bg'] }}>
@@ -235,13 +254,32 @@ function BoardPageInner() {
         {/* Right: actions */}
         <div className="flex items-center gap-1 sm:gap-1.5 shrink-0">
           {canvasItems.length > 0 && (
-            <Button variant="ghost" size="sm" icon
-                    title="Fit to view (double-click canvas)"
-                    onClick={() => fitViewRef.current?.()}>
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M3 7V5a2 2 0 0 1 2-2h2M17 3h2a2 2 0 0 1 2 2v2M21 17v2a2 2 0 0 1-2 2h-2M7 21H5a2 2 0 0 1-2-2v-2"/>
-              </svg>
-            </Button>
+            <>
+              <Button variant="ghost" size="sm" icon
+                      title="Fit to view (double-click canvas)"
+                      onClick={() => fitViewRef.current?.()}>
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M3 7V5a2 2 0 0 1 2-2h2M17 3h2a2 2 0 0 1 2 2v2M21 17v2a2 2 0 0 1-2 2h-2M7 21H5a2 2 0 0 1-2-2v-2"/>
+                </svg>
+              </Button>
+              <Button variant="ghost" size="sm" icon
+                      title="Export as image"
+                      onClick={() => {
+                        if (stageCanvasRef.current) {
+                          const dataUrl = stageCanvasRef.current.toDataURL({ pixelRatio: 2 });
+                          const a = document.createElement('a');
+                          a.href = dataUrl;
+                          a.download = `${board?.title ?? 'board'}.png`;
+                          a.click();
+                        } else {
+                          toast.error('Canvas not ready — try again');
+                        }
+                      }}>
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/>
+                </svg>
+              </Button>
+            </>
           )}
           {authMode === 'owner' && (
             <>
@@ -250,21 +288,58 @@ function BoardPageInner() {
                 existingTmdbIds={existingTmdbIds}
                 onImport={handleImport}
               />
-              <Button variant="ghost" size="sm" icon title="Share invite link" onClick={handleShare}>
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/>
-                  <path d="M8.59 13.51l6.83 3.98M15.41 6.51l-6.82 3.98"/>
-                </svg>
-              </Button>
-              <ThemeToggle />
-              <Button variant="ghost" size="sm" icon
-                      title="Board settings"
-                      onClick={() => router.push(`/board/${boardId}/settings`)}>
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <circle cx="12" cy="12" r="3"/>
-                  <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
-                </svg>
-              </Button>
+              {/* Share + Settings hidden behind overflow menu on mobile */}
+              <div className="hidden sm:flex items-center gap-1">
+                <Button variant="ghost" size="sm" icon title="Share invite link" onClick={handleShare}>
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/>
+                    <path d="M8.59 13.51l6.83 3.98M15.41 6.51l-6.82 3.98"/>
+                  </svg>
+                </Button>
+                <ThemeToggle />
+                <Button variant="ghost" size="sm" icon
+                        title="Board settings"
+                        onClick={() => router.push(`/board/${boardId}/settings`)}>
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <circle cx="12" cy="12" r="3"/>
+                    <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+                  </svg>
+                </Button>
+              </div>
+              {/* Mobile overflow menu */}
+              <div className="sm:hidden relative" ref={overflowRef}>
+                <Button variant="ghost" size="sm" icon title="More actions" onClick={() => setOverflowOpen(o => !o)}>
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <circle cx="12" cy="5" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="12" cy="19" r="1"/>
+                  </svg>
+                </Button>
+                {overflowOpen && (
+                  <>
+                    <div className="fixed inset-0 z-40" onClick={() => setOverflowOpen(false)} />
+                    <div className="absolute right-0 top-full mt-1 w-48 bg-[var(--surface-solid)] border border-[var(--border)] rounded-[var(--radius-xl)] shadow-[var(--shadow-lg)] z-50 py-1 overflow-hidden">
+                      <button className="w-full flex items-center gap-2.5 px-3 py-2.5 text-sm text-[var(--text)] hover:bg-[var(--surface-2)] transition-colors" onClick={() => { handleShare(); setOverflowOpen(false); }}>
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/>
+                          <path d="M8.59 13.51l6.83 3.98M15.41 6.51l-6.82 3.98"/>
+                        </svg>
+                        Share invite link
+                      </button>
+                      <button className="w-full flex items-center gap-2.5 px-3 py-2.5 text-sm text-[var(--text)] hover:bg-[var(--surface-2)] transition-colors" onClick={() => { router.push(`/board/${boardId}/settings`); setOverflowOpen(false); }}>
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <circle cx="12" cy="12" r="3"/>
+                          <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+                        </svg>
+                        Board settings
+                      </button>
+                      <div className="border-t border-[var(--border)] my-1" />
+                      <div className="flex items-center justify-between px-3 py-2.5">
+                        <span className="text-sm text-[var(--text)]">Dark mode</span>
+                        <ThemeToggle />
+                      </div>
+                    </div>
+                  </>
+                )}
+              </div>
             </>
           )}
           {authMode !== 'owner' && <ThemeToggle />}
@@ -314,6 +389,7 @@ function BoardPageInner() {
             onRemoveItem={authMode === 'owner' ? handleRemoveItem : undefined}
             onScaleChange={setCanvasScale}
             fitViewRef={fitViewRef}
+            externalStageRef={stageCanvasRef}
           />
         )}
       </main>

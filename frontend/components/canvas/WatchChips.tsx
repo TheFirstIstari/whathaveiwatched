@@ -47,7 +47,7 @@ export function WatchChips({ participants, x, y, chipDiameter, maxChips = 5 }: P
       ))}
       {overflow > 0 && (
         <Group x={visible.length * step}>
-          <Circle radius={r} fill="#71717A" stroke="rgba(255,255,255,0.75)" strokeWidth={1.5} />
+          <Circle radius={r} fill="var(--text-dim)" stroke="rgba(255,255,255,0.75)" strokeWidth={1.5} />
           <Text
             text={`+${overflow}`}
             fontSize={Math.max(5, r * 0.7)}

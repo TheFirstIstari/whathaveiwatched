@@ -23,7 +23,6 @@ export default function SignInPage() {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    // If already set up, go to dashboard
     if (getIdentityToken() && getDisplayName()) {
       router.replace('/');
     }
@@ -38,8 +37,6 @@ export default function SignInPage() {
     setLoading(true);
     try {
       setDisplayName(trimmed);
-      // SpacetimeDB connection + register_owner call happens in the dashboard
-      // via the connection hook once bindings are generated.
       router.replace('/');
     } catch (err: any) {
       setError(err?.message ?? 'Something went wrong');
@@ -49,37 +46,56 @@ export default function SignInPage() {
   };
 
   return (
-    <div className="relative flex min-h-screen items-center justify-center p-4">
-      <div className="absolute top-3 right-3"><ThemeToggle /></div>
-      <div className="w-full max-w-sm ui-card p-8 space-y-7 animate-[fade-in-up_0.4s_ease-out_both]">
-        <div className="text-center space-y-2">
-          <div className="inline-flex items-center gap-2.5 mb-1">
-            <span className="w-8 h-8 rounded-[var(--radius-lg)] bg-[var(--accent)] shadow-[var(--shadow-md)] flex items-center justify-center text-[var(--accent-fg)] text-sm font-bold" aria-hidden>▸</span>
-            <span className="text-lg font-semibold tracking-tight text-[var(--text)]">IHaveWatched</span>
+      <div className="relative flex min-h-screen overflow-hidden">
+      {/* Ambient background glow */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute top-1/4 left-1/3 w-[600px] h-[600px] rounded-full bg-[var(--accent)] opacity-[0.04] blur-[120px]" />
+        <div className="absolute bottom-1/4 right-1/4 w-[400px] h-[400px] rounded-full bg-[var(--accent)] opacity-[0.03] blur-[100px]" />
+      </div>
+
+      <div className="absolute top-4 right-4 z-20"><ThemeToggle /></div>
+
+      {/* Centered card */}
+      <div className="relative z-10 flex items-center justify-center w-full p-4">
+        <div className="w-full max-w-[380px] ui-card p-8 sm:p-10 space-y-8 animate-[fade-in-up_0.5s_ease-out_both]">
+          {/* Brand */}
+          <div className="text-center space-y-3">
+            <div className="inline-flex items-center justify-center w-12 h-12 rounded-[var(--radius-xl)] bg-[var(--accent)] shadow-[var(--shadow-md)] text-[var(--accent-fg)] text-lg font-bold mb-1" aria-hidden>
+              ▸
+            </div>
+            <h1 className="text-xl font-semibold tracking-tight text-[var(--text)]">
+              IHaveWatched
+            </h1>
+            <p className="text-sm text-[var(--text-soft)] leading-relaxed">
+              Track shared watch progress<br className="sm:hidden" /> with your friends.
+            </p>
           </div>
-          <p className="text-[var(--text-soft)] text-sm">
-            Collaborative media tracking for watchparties
-          </p>
+
+          {/* Form */}
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <Input
+              label="Your name"
+              value={name}
+              onChange={e => setName(e.target.value)}
+              error={error}
+              placeholder="e.g. Alice"
+              maxLength={50}
+              autoFocus
+            />
+            <Button type="submit" disabled={loading} className="w-full" size="lg">
+              {loading ? 'Setting up…' : 'Get started'}
+            </Button>
+          </form>
+
+          {/* Trust signal */}
+          <div className="flex items-center justify-center gap-4 text-[10px] text-[var(--text-dim)] uppercase tracking-wider">
+            <span>No account</span>
+            <span className="w-1 h-1 rounded-full bg-[var(--text-dim)] opacity-40" />
+            <span>Device-based</span>
+            <span className="w-1 h-1 rounded-full bg-[var(--text-dim)] opacity-40" />
+            <span>Real-time</span>
+          </div>
         </div>
-
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <Input
-            label="Your name"
-            value={name}
-            onChange={e => setName(e.target.value)}
-            error={error}
-            placeholder="e.g. Alice"
-            maxLength={50}
-            autoFocus
-          />
-          <Button type="submit" disabled={loading} className="w-full" size="lg">
-            {loading ? 'Setting up…' : 'Get started'}
-          </Button>
-        </form>
-
-        <p className="text-xs text-center text-[var(--text-dim)] leading-relaxed">
-          No account needed.<br/>Your boards are tied to this device.
-        </p>
       </div>
     </div>
   );

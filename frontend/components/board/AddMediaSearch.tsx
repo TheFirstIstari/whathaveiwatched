@@ -27,7 +27,6 @@ export function AddMediaSearch({ boardId, existingTmdbIds, onImport }: Props) {
   const [activeIdx, setActiveIdx] = useState(-1);
   const [open, setOpen]           = useState(false);
   const inputRef                  = useRef<HTMLInputElement>(null);
-  // boardId reserved for future board-scoped search
   void boardId;
 
   useEffect(() => {
@@ -85,8 +84,8 @@ export function AddMediaSearch({ boardId, existingTmdbIds, onImport }: Props) {
           onFocus={() => results.length > 0 && setOpen(true)}
           onBlur={() => setTimeout(() => setOpen(false), 150)}
           placeholder="Add movie or show…"
-          className="w-36 sm:w-48 h-8 pl-8 pr-8 rounded-[var(--radius-full)] text-sm
-                     bg-[var(--surface-solid)]/80 border border-[var(--border)]
+          className="w-40 sm:w-52 h-8 pl-8 pr-8 rounded-[var(--radius-full)] text-sm
+                     bg-[var(--surface-solid)] border border-[var(--border)]
                      text-[var(--text)] placeholder:text-[var(--text-dim)]
                      outline-none transition-all duration-150
                      shadow-[var(--shadow-xs)]
@@ -110,7 +109,7 @@ export function AddMediaSearch({ boardId, existingTmdbIds, onImport }: Props) {
       {/* Dropdown */}
       {open && (
         <div className="absolute right-0 top-full mt-1.5
-                        w-[min(22rem,calc(100vw-1.5rem))]
+                        w-[min(24rem,calc(100vw-1.5rem))]
                         bg-[var(--surface-solid)] border border-[var(--border)]
                         rounded-[var(--radius-xl)] overflow-hidden z-50
                         shadow-[var(--shadow-lg)]">
@@ -145,9 +144,9 @@ export function AddMediaSearch({ boardId, existingTmdbIds, onImport }: Props) {
                   <li
                     key={r.id}
                     onMouseDown={() => handleSelect(r)}
-                    className={`flex items-center gap-2.5 px-2.5 py-2 mx-1 my-px rounded-[var(--radius-sm)]
+                    className={`flex items-center gap-3 px-2.5 py-2 mx-1 my-px rounded-[var(--radius-lg)]
                                 cursor-pointer transition-colors select-none
-                                ${already ? 'opacity-50 cursor-default' : ''}
+                                ${already ? 'opacity-40 cursor-default' : ''}
                                 ${i === activeIdx
                                   ? 'bg-[var(--accent-soft)]'
                                   : 'hover:bg-[var(--surface-2)]'}`}
@@ -157,12 +156,14 @@ export function AddMediaSearch({ boardId, existingTmdbIds, onImport }: Props) {
                       // eslint-disable-next-line @next/next/no-img-element
                       <img
                         src={`https://image.tmdb.org/t/p/w92${r.posterPath}`}
-                        className="w-8 h-11 rounded object-cover shrink-0 border border-[var(--border)]"
+                        className="w-9 h-[52px] rounded-[var(--radius-sm)] object-cover shrink-0 border border-[var(--border)]"
                         alt=""
                       />
                     ) : (
-                      <div className="w-8 h-11 rounded bg-[var(--surface-2)] shrink-0 flex items-center justify-center text-[var(--text-dim)] text-xs border border-[var(--border)]">
-                        ?
+                      <div className="w-9 h-[52px] rounded-[var(--radius-sm)] bg-[var(--surface-2)] shrink-0 flex items-center justify-center text-[var(--text-dim)] text-xs border border-[var(--border)]">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="opacity-40">
+                          <rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/>
+                        </svg>
                       </div>
                     )}
 
@@ -174,13 +175,13 @@ export function AddMediaSearch({ boardId, existingTmdbIds, onImport }: Props) {
                         {r.year && <span>{r.year}</span>}
                         {r.year && r.media_type && <span className="opacity-50">·</span>}
                         <span className="uppercase tracking-wider">
-                          {r.media_type === 'tv' ? 'TV' : r.media_type}
+                          {r.media_type === 'tv' ? 'TV Show' : r.media_type === 'movie' ? 'Film' : r.media_type}
                         </span>
                       </p>
                     </div>
 
                     {already
-                      ? <span className="text-[10px] uppercase tracking-wider text-[var(--success)] font-medium shrink-0">Added</span>
+                      ? <span className="text-[10px] uppercase tracking-wider text-[var(--success)] font-medium shrink-0 px-1.5 py-0.5 rounded-[var(--radius-sm)] bg-[var(--success-soft)]">Added</span>
                       : <span className={`text-[10px] uppercase tracking-wider font-medium shrink-0
                                           ${i === activeIdx ? 'text-[var(--accent)]' : 'text-[var(--text-dim)]'}`}>
                           Add

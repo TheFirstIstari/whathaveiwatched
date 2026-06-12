@@ -1,6 +1,6 @@
 'use client';
 import { Group, Rect, Image as KonvaImage, Text } from 'react-konva';
-import { useRef } from 'react';
+import { useRef, useEffect } from 'react';
 import Konva from 'konva';
 import { useKonvaImage } from '@/lib/hooks/useKonvaImage';
 import { WatchChips, ChipParticipant } from './WatchChips';
@@ -17,6 +17,10 @@ export interface NodeCardProps {
   watchState: 'WATCHED' | 'PARTIAL' | 'UNWATCHED';
   x: number;
   y: number;
+  opacity: number;
+  targetX?: number;
+  targetY?: number;
+  targetOpacity?: number;
   theme: ThemeTokens;
   isOwnerOrParticipant: boolean;
   scale: number;
@@ -34,21 +38,37 @@ const TYPE_LABELS: Record<string, string> = {
   EPISODE: 'Ep.',
 };
 
+// Warmer, more cinematic type colors that harmonize with the teal accent
 const TYPE_COLORS: Record<string, string> = {
-  FILM:    '#6965DB',
-  SHOW:    '#228BE6',
-  SEASON:  '#9C36B5',
-  ARC:     '#E64980',
-  EPISODE: '#4B4740',
+  FILM:    '#7C6AEF',  // Soft violet
+  SHOW:    '#3B8EDB',  // Ocean blue
+  SEASON:  '#A855C7',  // Mauve
+  ARC:     '#D64687',  // Rose
+  EPISODE: '#6B6560',  // Warm gray
 };
 
 export function NodeCard({
   id, mediaType, title, subtitle, posterUrl,
-  participants, watchState, x, y, theme, isOwnerOrParticipant, scale,
+  participants, watchState, x, y, opacity = 1,
+  targetX, targetY, targetOpacity,
+  theme, isOwnerOrParticipant, scale,
   onClick, onRightClick, onShowTooltip, onHideTooltip,
 }: NodeCardProps) {
   const nodeRef = useRef<Konva.Group>(null);
   const { w, h } = nodeDimensions(mediaType);
+
+  // Animate to target position/opacity when transitioning
+  useEffect(() => {
+    if (nodeRef.current && targetX !== undefined && targetY !== undefined) {
+      nodeRef.current.to({
+        x: targetX,
+        y: targetY,
+        opacity: targetOpacity ?? 1,
+        duration: 0.28,
+        easing: Konva.Easings.EaseOut,
+      });
+    }
+  }, [targetX, targetY, targetOpacity]);
   const posterH = Math.floor(h * 0.56);
   const poster = useKonvaImage(posterUrl);
   const chipDiam = scale >= 0.7 ? 20 : 14;
@@ -89,7 +109,6 @@ export function NodeCard({
     onRightClick(id, pos);
   };
 
-  // Watched badge at top-right
   const badgeSize = 20;
   const badgeX = w - badgeSize - 7;
   const badgeY = 8;
@@ -101,6 +120,7 @@ export function NodeCard({
       ref={nodeRef}
       x={x}
       y={y}
+      opacity={opacity}
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
       onClick={handleClick}
@@ -113,9 +133,9 @@ export function NodeCard({
         fill="transparent"
         cornerRadius={cornerR}
         shadowColor={theme['card.shadow']}
-        shadowBlur={isWatched ? 14 : 6}
+        shadowBlur={isWatched ? 16 : 8}
         shadowOffsetY={isWatched ? 6 : 3}
-        shadowOpacity={isWatched ? 0.35 : 0.20}
+        shadowOpacity={isWatched ? 0.30 : 0.18}
         listening={false}
       />
 
@@ -147,7 +167,7 @@ export function NodeCard({
           height={posterH}
           y={2}
           fill={theme['card.border']}
-          opacity={0.10}
+          opacity={0.08}
           cornerRadius={[cornerR - 1, cornerR - 1, 0, 0]}
           listening={false}
         />
@@ -156,11 +176,11 @@ export function NodeCard({
       {/* Gradient overlay at bottom of poster for text legibility */}
       <Rect
         width={w}
-        height={16}
-        y={posterH - 12}
+        height={20}
+        y={posterH - 14}
         fillLinearGradientStartPoint={{ x: 0, y: 0 }}
-        fillLinearGradientEndPoint={{ x: 0, y: 16 }}
-        fillLinearGradientColorStops={[0, 'rgba(0,0,0,0)', 1, 'rgba(0,0,0,0.06)']}
+        fillLinearGradientEndPoint={{ x: 0, y: 20 }}
+        fillLinearGradientColorStops={[0, 'rgba(0,0,0,0)', 1, 'rgba(0,0,0,0.08)']}
         listening={false}
       />
 
@@ -170,7 +190,7 @@ export function NodeCard({
           <Rect
             x={7}
             y={8}
-            width={typeLabel.length * 6 + 12}
+            width={Math.max(36, typeLabel.length * 7 + 14)}
             height={17}
             fill={theme['card.bg']}
             stroke={typeColor}
@@ -181,7 +201,7 @@ export function NodeCard({
           />
           <Text
             text={typeLabel}
-            x={13}
+            x={14}
             y={12}
             fontSize={8.5}
             fontStyle="bold"
@@ -194,7 +214,6 @@ export function NodeCard({
       {/* Watched checkmark badge (top-right) */}
       {isWatched && scale >= 0.5 && (
         <>
-          {/* Outer ring */}
           <Rect
             x={badgeX - 1}
             y={badgeY - 1}
@@ -212,7 +231,7 @@ export function NodeCard({
             fill={theme['chip.watched']}
             cornerRadius={badgeSize / 2}
             listening={false}
-            shadowColor="rgba(0,0,0,0.15)"
+            shadowColor="rgba(0,0,0,0.12)"
             shadowBlur={4}
             shadowOffsetY={1}
           />
@@ -288,7 +307,7 @@ export function NodeCard({
         listening={false}
       />
 
-      {/* Watch chips — limit visible count to avoid overflowing narrow cards */}
+      {/* Watch chips */}
       {isOwnerOrParticipant && (
         <WatchChips
           participants={participants}
@@ -299,7 +318,7 @@ export function NodeCard({
         />
       )}
 
-      {/* Partial progress bar at bottom */}
+      {/* Partial progress bar at bottom — full width for visibility */}
       {isPartial && (
         <Rect
           width={w * 0.5}

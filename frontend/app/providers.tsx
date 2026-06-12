@@ -1,7 +1,6 @@
 'use client';
 
 import { createContext, useContext, useEffect, useState } from 'react';
-import dynamic from 'next/dynamic';
 import { SpacetimeDBProvider } from 'spacetimedb/react';
 import { DbConnection } from '@/src/module_bindings';
 import { DARK_THEME, LIGHT_THEME, ThemeTokens } from '@/lib/theme';
@@ -47,6 +46,11 @@ function SpacetimeProvider({ children }: { children: React.ReactNode }) {
     DbConnection.builder()
       .withUri(process.env.NEXT_PUBLIC_SPACETIMEDB_HOST!)
       .withDatabaseName(process.env.NEXT_PUBLIC_SPACETIMEDB_DB!)
+      // Force gzip: the SDK decodes server messages with the browser's
+      // DecompressionStream, which supports 'gzip'/'deflate' but NOT brotli.
+      // The default (brotli) throws "DecompressionStream(brotli)" and silently
+      // kills all reducer round-trips (createBoard/registerOwner never confirm).
+      .withCompression('gzip')
       .withToken(getIdentityToken() ?? undefined)
       .onConnect((_conn, identity, token) => {
         setIdentityToken(token);

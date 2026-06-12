@@ -1,4 +1,4 @@
-import type { Metadata } from 'next';
+import type { Metadata, Viewport } from 'next';
 import { JetBrains_Mono } from 'next/font/google';
 import './globals.css';
 import { Toaster } from 'sonner';
@@ -9,6 +9,16 @@ const jetbrainsMono = JetBrains_Mono({ subsets: ['latin'], weight: ['400', '500'
 export const metadata: Metadata = {
   title: 'IHaveWatched',
   description: 'Collaborative media tracking for watchparties',
+};
+
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  viewportFit: 'cover',
+  themeColor: [
+    { media: '(prefers-color-scheme: light)', color: '#e5e3df' },
+    { media: '(prefers-color-scheme: dark)', color: '#0e0e10' },
+  ],
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

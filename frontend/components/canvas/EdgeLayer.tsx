@@ -1,6 +1,6 @@
 'use client';
 import { Layer, Arrow, Line } from 'react-konva';
-import { NodeLayout, nodeDimensions } from '@/lib/canvas/layout';
+import { NodeLayout, nodeDimensions, NODE_HEIGHT, LANE_GAP } from '@/lib/canvas/layout';
 import { ThemeTokens } from '@/lib/theme';
 
 interface Props {
@@ -9,13 +9,14 @@ interface Props {
 }
 
 export function EdgeLayer({ nodes, theme }: Props) {
-  // Group nodes by lane, sort by chronoOrder, draw edges between consecutive
+  // Group nodes by their vertical lane position, sort by chronoOrder, draw edges between consecutive
   const byLane = new Map<number, NodeLayout[]>();
   nodes.forEach(n => {
-    const lane = 0; // Phase 1: all lane 0
-    const arr = byLane.get(lane) ?? [];
+    // Use the node's y-position to determine lane grouping
+    const laneKey = Math.round(n.y / (NODE_HEIGHT + LANE_GAP));
+    const arr = byLane.get(laneKey) ?? [];
     arr.push(n);
-    byLane.set(lane, arr);
+    byLane.set(laneKey, arr);
   });
 
   const edgeColor = theme['card.border'];
@@ -25,13 +26,12 @@ export function EdgeLayer({ nodes, theme }: Props) {
     for (let i = 0; i < sorted.length - 1; i++) {
       const a = sorted[i];
       const b = sorted[i + 1];
-      const { w: aw, h: ah } = nodeDimensions(a.mediaType);
-      const { h: bh } = nodeDimensions(b.mediaType);
+      const { w: aw } = nodeDimensions(a.mediaType);
       edges.push({
         x1: a.x + aw,
-        y1: a.y + ah / 2,
+        y1: a.y + a.height / 2,
         x2: b.x,
-        y2: b.y + bh / 2,
+        y2: b.y + b.height / 2,
       });
     }
   });

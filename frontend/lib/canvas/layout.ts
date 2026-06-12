@@ -5,6 +5,8 @@ export const LANE_GAP = 24;
 export const NODE_PAD = 12;
 export const MIN_SCALE = 0.1;
 export const MAX_SCALE = 2.0;
+export const MAX_ITEMS_PER_BUCKET = 4; // How many items in the same time bucket before they need a new visual lane
+export const BUCKET_WINDOW = 3; // chronoOrder values within this absolute range are grouped together
 
 export type ZoomLevel = 'EPISODE' | 'SEASON' | 'SHOW';
 
@@ -45,35 +47,70 @@ export function computeLayout(items: LayoutItem[], scale: number): NodeLayout[] 
     return a.chronoOrder - b.chronoOrder;
   });
 
-  const laneEnds: number[] = [];
+  // 1. Group items into "time buckets" — items with identical chronoOrders share a visual column
+  //    Sequential chronoOrders (0, 1, 2) get separate columns as before
+  const buckets: LayoutItem[][] = [];
+  for (const item of sorted) {
+    if (buckets.length === 0) {
+      buckets.push([item]);
+      continue;
+    }
+    const lastBucket = buckets[buckets.length - 1];
+    const lastItem = lastBucket[lastBucket.length - 1];
+    // Group only if they have the exact same chronoOrder or within a tiny epsilon
+    if (item.chronoOrder === lastItem.chronoOrder) {
+      lastBucket.push(item);
+    } else {
+      buckets.push([item]);
+    }
+  }
+
+  // 2. Assign lanes per bucket — items in the same bucket spread across lanes
+  const laneEnds: number[] = [0]; // track which item count each lane has
   const result: NodeLayout[] = [];
 
-  for (const item of sorted) {
-    // Use laneIndex from server if available; otherwise greedy assign
-    let lane = item.laneIndex ?? 0;
-    if (lane === 0) {
-      lane = 0;
-      for (let l = 0; l < laneEnds.length; l++) {
-        if (laneEnds[l] < item.chronoOrder) { lane = l; break; }
-      }
-      if (lane >= laneEnds.length) { laneEnds.push(0); lane = laneEnds.length - 1; }
-    }
-    if (lane >= laneEnds.length) laneEnds.push(0);
-    laneEnds[lane] = item.chronoOrder + 1;
+  buckets.forEach((bucket, bucketIdx) => {
+    // Distribute items in this bucket across available lanes
+    const bucketItems = [...bucket];
+    const freeLanes: number[] = [];
 
-    const { w, h } = nodeDimensions(item.mediaType);
-    result.push({
-      id: item.id,
-      x: item.chronoOrder * CHRONO_UNIT_PX,
-      y: lane * (NODE_HEIGHT + LANE_GAP),
-      width: w,
-      height: h,
-      zoomType: level,
-      mediaType: item.mediaType,
-      chronoOrder: item.chronoOrder,
-      parentId: item.parentId,
+    // First pass: find lanes that are free (their last bucket is at least BUCKET_WINDOW behind)
+    for (let l = 0; l < laneEnds.length; l++) {
+      if (laneEnds[l] <= bucketIdx) {
+        freeLanes.push(l);
+      }
+    }
+
+    // If we have more items than free lanes, add new lanes
+    while (freeLanes.length < bucketItems.length) {
+      const newLane = laneEnds.length;
+      laneEnds.push(0);
+      freeLanes.push(newLane);
+    }
+
+    // Assign each item to a lane, round-robin
+    bucketItems.forEach((item, idx) => {
+      const lane = freeLanes[idx];
+      laneEnds[lane] = bucketIdx + 1;
+
+      const { w, h } = nodeDimensions(item.mediaType);
+      const bucketX = bucketIdx * CHRONO_UNIT_PX;
+      // If multiple items in this bucket, offset them slightly horizontally to avoid overlap
+      const laneOffsetX = bucketItems.length > 1 ? (idx * 12) : 0;
+      result.push({
+        id: item.id,
+        x: bucketX + laneOffsetX,
+        y: lane * (NODE_HEIGHT + LANE_GAP),
+        width: w,
+        height: h,
+        zoomType: level,
+        mediaType: item.mediaType,
+        chronoOrder: item.chronoOrder,
+        parentId: item.parentId,
+      });
     });
-  }
+  });
+
   return result;
 }
 

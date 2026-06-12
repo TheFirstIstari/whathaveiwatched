@@ -3,7 +3,7 @@ import { useRef, useState, useCallback, useEffect, useMemo } from 'react';
 import { Stage, Layer, Circle } from 'react-konva';
 import Konva from 'konva';
 import { useCanvasCamera } from '@/lib/hooks/useCanvasCamera';
-import { computeLayout, NodeLayout } from '@/lib/canvas/layout';
+import { computeLayout, getZoomLevel, type NodeLayout, type ZoomLevel } from '@/lib/canvas/layout';
 import { NodeCard } from './NodeCard';
 import { EdgeLayer } from './EdgeLayer';
 import { Tooltip } from './Tooltip';
@@ -59,14 +59,21 @@ interface Props {
   onRemoveItem?: (mediaItemId: bigint) => void;
   onScaleChange?: (scale: number) => void;
   fitViewRef?: React.MutableRefObject<FitViewFn | null>;
+  externalStageRef?: React.MutableRefObject<Konva.Stage | null>;
 }
 
 export function BoardCanvas({
   boardId, items, participants, watchEntries, watchAggs,
   myIdentityHex, isOwner, isOwnerOrParticipant, theme,
-  onSetWatch, onSetWatchBulk, onRemoveItem, onScaleChange, fitViewRef,
+  onSetWatch, onSetWatchBulk, onRemoveItem, onScaleChange, fitViewRef, externalStageRef,
 }: Props) {
   const stageRef = useRef<Konva.Stage>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  // Sync external ref
+  useEffect(() => {
+    if (externalStageRef) externalStageRef.current = stageRef.current;
+  });
   const { x, y, scale, setCam } = useCanvasCamera();
   const [windowSize, setWindowSize] = useState({ width: 800, height: 600 });
   const [tooltip, setTooltip] = useState({ visible: false, x: 0, y: 0, title: '', subtitle: '' });
@@ -75,6 +82,17 @@ export function BoardCanvas({
   }>({ visible: false, x: 0, y: 0, nodeId: null });
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [drawerNodeId, setDrawerNodeId] = useState<bigint | null>(null);
+  const prevZoomLevelRef = useRef<ZoomLevel>(getZoomLevel(scale));
+  const [prevLayouts, setPrevLayouts] = useState<NodeLayout[] | null>(null);
+  const [transitionNodes, setTransitionNodes] = useState<{
+    id: bigint;
+    fromX: number;
+    fromY: number;
+    fromOpacity: number;
+    toX: number;
+    toY: number;
+    opacity: number;
+  }[] | null>(null);
   const isPanning = useRef(false);
   const panOrigin = useRef({ x: 0, y: 0, cx: 0, cy: 0 });
 
@@ -90,12 +108,26 @@ export function BoardCanvas({
   }, [drawerOpen]);
 
   useEffect(() => {
-    const update = () => setWindowSize({ width: window.innerWidth, height: window.innerHeight });
+    const update = () => {
+      const el = containerRef.current;
+      if (el) {
+        setWindowSize({ width: el.clientWidth, height: el.clientHeight });
+      } else {
+        setWindowSize({ width: window.innerWidth, height: window.innerHeight });
+      }
+    };
     update();
     let timer: ReturnType<typeof setTimeout>;
     const debounced = () => { clearTimeout(timer); timer = setTimeout(update, 100); };
     window.addEventListener('resize', debounced);
-    return () => { clearTimeout(timer); window.removeEventListener('resize', debounced); };
+    // Also observe the container directly via ResizeObserver
+    const el = containerRef.current;
+    let observer: ResizeObserver | undefined;
+    if (el && typeof ResizeObserver !== 'undefined') {
+      observer = new ResizeObserver(() => { clearTimeout(timer); timer = setTimeout(update, 50); });
+      observer.observe(el);
+    }
+    return () => { clearTimeout(timer); window.removeEventListener('resize', debounced); observer?.disconnect(); };
   }, []);
 
   // Notify parent of scale changes
@@ -149,6 +181,44 @@ export function BoardCanvas({
   useEffect(() => {
     if (fitViewRef) fitViewRef.current = fitView;
   }, [fitView, fitViewRef]);
+
+  // Detect zoom level changes to animate transitions
+  const currentZoomLevel = getZoomLevel(scale);
+  useEffect(() => {
+    const prev = prevZoomLevelRef.current;
+    if (prev !== currentZoomLevel && prevLayouts && nodeLayouts.length > 0) {
+      const oldLayoutMap = new Map(prevLayouts.map(l => [String(l.id), l]));
+      const transitions: {
+        id: bigint;
+        fromX: number; fromY: number; fromOpacity: number;
+        toX: number; toY: number; opacity: number;
+      }[] = [];
+
+      nodeLayouts.forEach(layout => {
+        const old = oldLayoutMap.get(String(layout.id));
+        if (old) {
+          transitions.push({
+            id: layout.id,
+            fromX: old.x, fromY: old.y, fromOpacity: 1,
+            toX: layout.x, toY: layout.y, opacity: 1,
+          });
+        } else {
+          transitions.push({
+            id: layout.id,
+            fromX: layout.x, fromY: layout.y - 20, fromOpacity: 0,
+            toX: layout.x, toY: layout.y, opacity: 1,
+          });
+        }
+      });
+
+      setTransitionNodes(transitions);
+      setTimeout(() => setTransitionNodes(null), 300);
+    }
+    prevZoomLevelRef.current = currentZoomLevel;
+    if (nodeLayouts.length > 0) {
+      setPrevLayouts(nodeLayouts);
+    }
+  }, [currentZoomLevel, prevLayouts, nodeLayouts]);
 
   const getItemWatchState = useCallback((itemId: bigint) => {
     if (!myIdentityHex) return 'UNWATCHED' as const;
@@ -254,7 +324,7 @@ export function BoardCanvas({
       );
     }
 
-    menuItems.push({ label: 'Show details', action: () => { setDrawerNodeId(nodeId); setDrawerOpen(true); } });
+    menuItems.push({ label: 'Show details', action: () => { setDrawerNodeId(nodeId); setDrawerOpen(true); }, dividerAfter: isOwner && onRemoveItem ? true : false });
 
     if (isOwner && onRemoveItem) {
       menuItems.push({ label: 'Remove from board', action: () => onRemoveItem(nodeId), danger: true });
@@ -294,7 +364,7 @@ export function BoardCanvas({
   }, [theme, x, y, scale, windowSize]);
 
   return (
-    <>
+    <div ref={containerRef} className="w-full h-full relative">
       <Stage
         ref={stageRef}
         width={windowSize.width}
@@ -323,6 +393,7 @@ export function BoardCanvas({
           {nodeLayouts.map(layout => {
             const item = items.find(i => i.id === layout.id);
             if (!item) return null;
+            const trans = transitionNodes?.find(t => t.id === layout.id);
             return (
               <NodeCard
                 key={String(layout.id)}
@@ -333,8 +404,12 @@ export function BoardCanvas({
                 posterUrl={item.posterUrl || null}
                 participants={getChips(item.id)}
                 watchState={getItemWatchState(item.id)}
-                x={layout.x}
-                y={layout.y}
+                x={trans ? trans.fromX : layout.x}
+                y={trans ? trans.fromY : layout.y}
+                opacity={trans ? trans.fromOpacity : 1}
+                targetX={trans ? trans.toX : undefined}
+                targetY={trans ? trans.toY : undefined}
+                targetOpacity={trans ? trans.opacity : undefined}
                 theme={theme}
                 isOwnerOrParticipant={isOwnerOrParticipant}
                 scale={scale}
@@ -380,6 +455,6 @@ export function BoardCanvas({
         onSetWatch={onSetWatch}
         onSetWatchBulk={onSetWatchBulk}
       />
-    </>
+    </div>
   );
 }

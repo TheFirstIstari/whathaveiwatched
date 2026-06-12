@@ -1,12 +1,10 @@
 'use client';
 
-export const dynamic = 'force-dynamic';
-
 import { useEffect, useState } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { useTable, useReducer } from 'spacetimedb/react';
 import { tables, reducers } from '@/src/module_bindings';
-import { getDisplayName, getIdentityHex } from '@/lib/db/connection';
+import { getDisplayName, getIdentityHex, getParticipantState } from '@/lib/db/connection';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { ThemeToggle } from '@/components/ui/ThemeToggle';
@@ -18,6 +16,7 @@ function BoardSettingsInner() {
   const boardId = BigInt(params.boardId as string);
 
   const [identityHex, setIH]      = useState<string | null>(null);
+  const [authMode, setAuthMode]   = useState<'owner' | 'participant' | 'public' | null>(null);
   const [title, setTitle]         = useState('');
   const [description, setDesc]    = useState('');
   const [sharingMode, setSharing] = useState<'PRIVATE' | 'PUBLIC'>('PRIVATE');
@@ -25,6 +24,7 @@ function BoardSettingsInner() {
   const [editLoading, setEL]      = useState(false);
   const [deleteConfirm, setDC]    = useState(false);
   const [resetConfirm, setRC]     = useState(false);
+  const [leaveConfirm, setLeaveConfirm] = useState(false);
   const [copied, setCopied]       = useState(false);
 
   useEffect(() => {
@@ -48,17 +48,35 @@ function BoardSettingsInner() {
   const board = boards.find(b => b.id === boardId);
   const boardParticipants = participants.filter(p => p.boardId === boardId);
 
-  // Stats
   const topLevelItems = mediaItems.filter(m => m.boardId === boardId && (m.mediaType === 'FILM' || m.mediaType === 'SHOW'));
   const totalItems    = mediaItems.filter(m => m.boardId === boardId).length;
 
-  // Guard: redirect non-owners
+  // Set initial authMode from cached state
   useEffect(() => {
-    if (!board || !identityHex) return;
-    if (board.ownerIdentity.toHexString() !== identityHex) {
+    if (!identityHex) return;
+    const name = getDisplayName();
+    if (board && board.ownerIdentity.toHexString() === identityHex) {
+      setAuthMode('owner');
+    } else if (getParticipantState(boardId)) {
+      setAuthMode('participant');
+    } else {
       router.replace(`/board/${boardId}`);
     }
   }, [board, identityHex, boardId, router]);
+
+  // Refine authMode once participants table is loaded
+  useEffect(() => {
+    if (!board || !identityHex) return;
+    if (board.ownerIdentity.toHexString() === identityHex) {
+      setAuthMode('owner');
+    } else if (participants.some(p => p.boardId === boardId && p.participantIdentity.toHexString() === identityHex)) {
+      setAuthMode('participant');
+    } else if (board.sharingMode === 'PUBLIC') {
+      setAuthMode('public');
+    } else {
+      router.replace(`/board/${boardId}`);
+    }
+  }, [board, identityHex, participants, boardId, router]);
 
   // Pre-fill form from board data
   useEffect(() => {
@@ -73,7 +91,6 @@ function BoardSettingsInner() {
     ? `${typeof window !== 'undefined' ? window.location.origin : ''}/board/${boardId}/join?invite=${board.inviteToken}`
     : '';
 
-  // Owner display name from account table
   const ownerAccount = board ? accounts.find(a => a.ownerIdentity.toHexString() === board.ownerIdentity.toHexString()) : null;
   const ownerName = ownerAccount?.displayName ?? getDisplayName() ?? 'Owner';
 
@@ -97,6 +114,25 @@ function BoardSettingsInner() {
       router.replace('/');
     } catch (err: any) {
       toast.error(err?.message ?? 'Delete failed');
+    }
+  };
+
+  const handleLeave = async () => {
+    if (!leaveConfirm) { setLeaveConfirm(true); return; }
+    const myParticipant = boardParticipants.find(
+      p => p.participantIdentity.toHexString() === identityHex
+    );
+    if (!myParticipant) {
+      toast.error('Could not find your participant entry');
+      return;
+    }
+    try {
+      await removeParticipant({ boardId, participantId: myParticipant.id });
+      toast.success('You left the board');
+      localStorage.removeItem(`ihw_participant_${boardId}`);
+      router.replace('/');
+    } catch (err: any) {
+      toast.error(err?.message ?? 'Failed to leave board');
     }
   };
 
@@ -125,9 +161,23 @@ function BoardSettingsInner() {
     }
   };
 
+  const handleLeaveBoard = async () => {
+    const myParticipant = participants.find(
+      p => p.boardId === boardId && p.participantIdentity.toHexString() === identityHex
+    );
+    if (!myParticipant) { toast.error('Could not find your participant entry'); return; }
+    try {
+      await removeParticipant({ boardId, participantId: myParticipant.id });
+      toast.success('Left board');
+      router.replace('/');
+    } catch (err: any) {
+      toast.error(err?.message ?? 'Failed to leave board');
+    }
+  };
+
   return (
     <div className="min-h-screen">
-      <header className="sticky top-0 z-20 border-b border-[var(--border)] bg-[var(--surface)]/70 backdrop-blur-xl">
+      <header className="sticky top-0 z-20 border-b border-[var(--border)] bg-[var(--surface)]/80 backdrop-blur-xl">
         <div className="max-w-2xl mx-auto px-4 sm:px-6 h-12 flex items-center gap-2.5">
           <Button variant="ghost" size="sm" icon onClick={() => router.push(`/board/${boardId}`)}
                   title="Back to board">
@@ -142,25 +192,26 @@ function BoardSettingsInner() {
         </div>
       </header>
 
-      <main className="max-w-2xl mx-auto px-4 sm:px-6 py-8 space-y-5">
+      <main className="max-w-2xl mx-auto px-4 sm:px-6 py-6 sm:py-8 space-y-4">
 
         {/* Stats */}
         {board && (
           <div className="grid grid-cols-3 gap-2">
             {[
-              { label: 'Titles', value: topLevelItems.length },
-              { label: 'Items', value: totalItems },
-              { label: 'Members', value: boardParticipants.length + 1 },
+              { label: 'Titles', value: topLevelItems.length, hint: 'Top-level items' },
+              { label: 'Items', value: totalItems, hint: 'Including seasons & episodes' },
+              { label: 'Members', value: boardParticipants.length + 1, hint: 'Including owner' },
             ].map(stat => (
-              <div key={stat.label} className="ui-card px-4 py-3.5">
+              <div key={stat.label} className="ui-card px-4 py-3">
                 <p className="text-xl font-semibold text-[var(--text)] tabular-nums leading-none">{stat.value}</p>
-                <p className="text-[11px] text-[var(--text-dim)] mt-1.5 uppercase tracking-wider">{stat.label}</p>
+                <p className="text-[11px] text-[var(--text-dim)] mt-1 uppercase tracking-wider">{stat.label}</p>
               </div>
             ))}
           </div>
         )}
 
-        {/* Board info */}
+        {/* Board info — owner only */}
+        {authMode === 'owner' && (
         <SettingsSection title="Board" description="Name, description, and sharing.">
           <form onSubmit={handleUpdate} className="space-y-4">
             <Input label="Name" value={title} onChange={e => setTitle(e.target.value)} maxLength={60} />
@@ -188,14 +239,14 @@ function BoardSettingsInner() {
                 const checked = sharingMode === mode;
                 return (
                   <label key={mode}
-                         className={`flex items-start gap-3 p-3 rounded-[var(--radius-md)] cursor-pointer border transition-colors
+                         className={`flex items-start gap-3 p-3 rounded-[var(--radius-lg)] cursor-pointer border transition-colors
                                      ${checked
                                        ? 'border-[var(--border-accent)] bg-[var(--accent-soft)]'
                                        : 'border-[var(--border)] hover:bg-[var(--surface-2)]'}`}>
                     <input type="radio" name="sharing" value={mode}
                            checked={checked} onChange={() => setSharing(mode)}
-                           className="mt-0.5 accent-[var(--accent)]" />
-                    <div>
+                           className="mt-0.5 accent-[var(--accent)] shrink-0" />
+                    <div className="min-w-0">
                       <p className="text-sm font-medium text-[var(--text)] leading-tight">{label}</p>
                       <p className="text-xs text-[var(--text-soft)] mt-0.5">{desc}</p>
                     </div>
@@ -214,14 +265,14 @@ function BoardSettingsInner() {
                 const checked = orderingMode === mode;
                 return (
                   <label key={mode}
-                         className={`flex items-start gap-3 p-3 rounded-[var(--radius-md)] cursor-pointer border transition-colors
+                         className={`flex items-start gap-3 p-3 rounded-[var(--radius-lg)] cursor-pointer border transition-colors
                                      ${checked
                                        ? 'border-[var(--border-accent)] bg-[var(--accent-soft)]'
                                        : 'border-[var(--border)] hover:bg-[var(--surface-2)]'}`}>
                     <input type="radio" name="ordering" value={mode}
                            checked={checked} onChange={() => setOrdering(mode)}
-                           className="mt-0.5 accent-[var(--accent)]" />
-                    <div>
+                           className="mt-0.5 accent-[var(--accent)] shrink-0" />
+                    <div className="min-w-0">
                       <p className="text-sm font-medium text-[var(--text)] leading-tight">{label}</p>
                       <p className="text-xs text-[var(--text-soft)] mt-0.5">{desc}</p>
                     </div>
@@ -236,8 +287,10 @@ function BoardSettingsInner() {
             </div>
           </form>
         </SettingsSection>
+        )}
 
-        {/* Invite link */}
+        {/* Invite link — owner only */}
+        {authMode === 'owner' && (
         <SettingsSection title="Invite link" description="Share this link so others can join.">
           <div className="flex gap-2">
             <input
@@ -260,8 +313,10 @@ function BoardSettingsInner() {
             Regenerate link
           </button>
         </SettingsSection>
+        )}
 
-        {/* Members */}
+        {/* Members — owner only */}
+        {authMode === 'owner' && (
         <SettingsSection title={`Members · ${boardParticipants.length + 1}`} description="People with access to this board.">
           <ul className="-mx-2 -my-1">
             {/* Owner row */}
@@ -284,8 +339,9 @@ function BoardSettingsInner() {
                   </div>
                   <span className="text-sm text-[var(--text)]">{p.displayName}</span>
                 </div>
+                {/* Always visible on mobile, hover-only on desktop */}
                 <button
-                  className="text-[11px] text-[var(--text-dim)] hover:text-[var(--danger)] opacity-0 group-hover:opacity-100 transition-opacity px-1.5 py-1 rounded-[var(--radius-sm)] hover:bg-[var(--danger-soft)]"
+                  className="text-[11px] text-[var(--text-dim)] hover:text-[var(--danger)] sm:opacity-0 sm:group-hover:opacity-100 transition-opacity px-1.5 py-1 rounded-[var(--radius-sm)] hover:bg-[var(--danger-soft)]"
                   onClick={() => handleRemoveParticipant(p.id, p.displayName)}
                 >
                   Remove
@@ -294,11 +350,12 @@ function BoardSettingsInner() {
             ))}
           </ul>
         </SettingsSection>
+        )}
 
         {/* Reset progress */}
         <SettingsSection title="Reset progress" description="Clear your watch state for this board.">
           {resetConfirm ? (
-            <div className="space-y-3 p-4 rounded-[var(--radius-md)] bg-[var(--warning)]/10 border border-[var(--warning)]/20">
+            <div className="space-y-3 p-4 rounded-[var(--radius-lg)] bg-[var(--warning-soft)] border border-[var(--warning)]/20">
               <p className="text-sm text-[var(--text)] font-medium">Reset all your watch progress on this board?</p>
               <p className="text-xs text-[var(--text-soft)]">This only affects your data — other members keep theirs.</p>
               <div className="flex gap-2">
@@ -325,17 +382,32 @@ function BoardSettingsInner() {
             <h2 className="text-sm font-semibold text-[var(--danger)]">Danger zone</h2>
             <p className="text-xs text-[var(--text-soft)] mt-0.5">Permanent and irreversible actions.</p>
           </div>
-          {deleteConfirm ? (
-            <div className="space-y-3 p-4 rounded-[var(--radius-md)] bg-[var(--danger-soft)] border border-[var(--danger)]/20">
-              <p className="text-sm text-[var(--text)] font-medium">Permanently delete this board and all its data?</p>
-              <div className="flex gap-2">
-                <Button variant="danger" size="sm" onClick={handleDelete}>Yes, delete</Button>
-                <Button variant="secondary" size="sm" onClick={() => setDC(false)}>Cancel</Button>
+          {authMode === 'owner' ? (
+            deleteConfirm ? (
+              <div className="space-y-3 p-4 rounded-[var(--radius-lg)] bg-[var(--danger-soft)] border border-[var(--danger)]/20">
+                <p className="text-sm text-[var(--text)] font-medium">Permanently delete this board and all its data?</p>
+                <div className="flex gap-2">
+                  <Button variant="danger" size="sm" onClick={handleDelete}>Yes, delete</Button>
+                  <Button variant="secondary" size="sm" onClick={() => setDC(false)}>Cancel</Button>
+                </div>
               </div>
-            </div>
-          ) : (
-            <Button variant="danger" size="sm" onClick={handleDelete}>Delete board</Button>
-          )}
+            ) : (
+              <Button variant="danger" size="sm" onClick={handleDelete}>Delete board</Button>
+            )
+          ) : authMode === 'participant' ? (
+            leaveConfirm ? (
+              <div className="space-y-3 p-4 rounded-[var(--radius-lg)] bg-[var(--danger-soft)] border border-[var(--danger)]/20">
+                <p className="text-sm text-[var(--text)] font-medium">Leave this board?</p>
+                <p className="text-xs text-[var(--text-soft)]">You can rejoin later with an invite link.</p>
+                <div className="flex gap-2">
+                  <Button variant="danger" size="sm" onClick={handleLeave}>Yes, leave</Button>
+                  <Button variant="secondary" size="sm" onClick={() => setLeaveConfirm(false)}>Cancel</Button>
+                </div>
+              </div>
+            ) : (
+              <Button variant="danger" size="sm" onClick={() => setLeaveConfirm(true)}>Leave board</Button>
+            )
+          ) : null}
         </section>
 
       </main>
@@ -345,8 +417,8 @@ function BoardSettingsInner() {
 
 function SettingsSection({ title, description, children }: { title: string; description?: string; children: React.ReactNode }) {
   return (
-    <section className="ui-card p-6">
-      <div className="mb-5">
+    <section className="ui-card p-5 sm:p-6">
+      <div className="mb-4">
         <h2 className="text-sm font-semibold text-[var(--text)]">{title}</h2>
         {description && <p className="text-xs text-[var(--text-soft)] mt-0.5">{description}</p>}
       </div>
@@ -360,8 +432,8 @@ export default function BoardSettingsPage() {
   useEffect(() => setMounted(true), []);
   if (!mounted) return (
     <div className="min-h-screen">
-      <header className="border-b border-[var(--border)] h-14 flex items-center px-6">
-        <div className="h-5 w-32 bg-[var(--surface-2)] rounded animate-pulse" />
+      <header className="border-b border-[var(--border)] h-12 flex items-center px-6">
+        <div className="h-4 w-28 ui-skeleton" />
       </header>
     </div>
   );
