@@ -1,16 +1,17 @@
 'use client';
 
 // No SpacetimeDB useTable hooks — only useReducer. No force-dynamic needed.
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
-import { useReducer } from 'spacetimedb/react';
-import { reducers } from '@/src/module_bindings';
+import { useReducer, useSpacetimeDB, useTable } from 'spacetimedb/react';
+import { reducers, tables } from '@/src/module_bindings';
 import { getDisplayName } from '@/lib/db/connection';
+import { importMedia } from '@/lib/db/importMedia';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { ThemeToggle } from '@/components/ui/ThemeToggle';
 import { toast } from 'sonner';
-import { PRESETS, type Preset } from '@/lib/presets';
+import { PRESETS, type Preset, type PresetItem } from '@/lib/presets';
 
 function NewBoardPageInner() {
   const router = useRouter();
@@ -21,11 +22,73 @@ function NewBoardPageInner() {
   const [selectedPreset, setSelectedPreset] = useState<Preset | null>(null);
   const [step, setStep]             = useState<'preset' | 'details'>('preset');
 
+  // Preset auto-import state
+  const [pendingImport, setPendingImport] = useState<Preset | null>(null);
+  const [importProgress, setImportProgress] = useState<{current: number; total: number} | null>(null);
+  const boardCountBeforeCreate = useRef(0);
+
+  const { getConnection, identity } = useSpacetimeDB();
+  const [allBoards] = useTable(tables.board);
+
   useEffect(() => {
     if (!getDisplayName()) router.replace('/signin');
   }, [router]);
 
   const createBoard = useReducer(reducers.createBoard);
+
+  // Watch for the newly created board to appear in subscription, then auto-import preset items
+  useEffect(() => {
+    if (!pendingImport || !identity) return;
+    if (importProgress) return; // already importing
+
+    const identityHex = identity.toHexString();
+    const myBoards = allBoards
+      .filter(b => b.ownerIdentity.toHexString() === identityHex)
+      .sort((a, b) => Number(b.id - a.id));
+
+    // The newest board by our identity is the one we just created
+    if (myBoards.length > boardCountBeforeCreate.current) {
+      const newBoard = myBoards[0];
+      const conn = getConnection();
+      if (!conn) {
+        toast.error('Not connected to database');
+        setPendingImport(null);
+        return;
+      }
+
+      // Start importing — show progress, don't block navigation until done
+      setImportProgress({ current: 0, total: pendingImport.items.length });
+      const toastId = toast.loading(`Importing 0/${pendingImport.items.length} titles…`);
+
+      let cancelled = false;
+
+      (async () => {
+        for (let i = 0; i < pendingImport.items.length; i++) {
+          if (cancelled) break;
+          const item: PresetItem = pendingImport.items[i];
+          try {
+            await importMedia(conn, newBoard.id, item.tmdbId, item.mediaType);
+            setImportProgress({ current: i + 1, total: pendingImport.items.length });
+            toast.loading(`Importing ${i + 1}/${pendingImport.items.length} titles…`, { id: toastId });
+          } catch (err: any) {
+            const msg = err?.message ?? 'unknown';
+            console.warn(`Failed to import "${item.title}" (TMDB:${item.tmdbId}): ${msg}`);
+            toast.error(`Failed to import "${item.title}"`, { id: toastId });
+          }
+        }
+
+        if (!cancelled) {
+          toast.success(`Board created with ${pendingImport.items.length} titles`, { id: toastId });
+          setPendingImport(null);
+          setImportProgress(null);
+          router.push(`/board/${newBoard.id}`);
+        }
+      })();
+
+      // Cleanup — cancel if component unmounts
+      return () => { cancelled = true; };
+    }
+  }, [allBoards, pendingImport, identity, importProgress, getConnection, router]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -34,12 +97,15 @@ function NewBoardPageInner() {
     setError('');
     setLoading(true);
     try {
+      boardCountBeforeCreate.current = allBoards.length;
       await createBoard({ title: trimmed, description: description.trim() });
-      toast.success(`Board "${trimmed}" created`);
       if (selectedPreset) {
-        toast.info(`Preset "${selectedPreset.name}" selected — add titles from the board page.`);
+        // Start watching for board to appear, then auto-import
+        setPendingImport(selectedPreset);
+      } else {
+        toast.success(`Board "${trimmed}" created`);
+        router.push('/');
       }
-      router.push('/');
     } catch (err: any) {
       const msg = err?.message ?? 'Failed to create board';
       if (msg.includes('NOT_AUTHENTICATED')) {
@@ -63,6 +129,8 @@ function NewBoardPageInner() {
     setSelectedPreset(null);
     setStep('details');
   };
+
+  const isLoading = loading || pendingImport !== null || importProgress !== null;
 
   return (
     <div className="relative flex min-h-screen overflow-hidden">
@@ -150,12 +218,28 @@ function NewBoardPageInner() {
                 <p className="text-xs text-[var(--text-dim)] leading-relaxed">
                   Boards start private. You can change sharing &amp; invite settings after creation.
                 </p>
+
+                {importProgress && (
+                  <div className="space-y-1">
+                    <div className="flex justify-between text-xs text-[var(--text-dim)]">
+                      <span>Importing titles…</span>
+                      <span>{importProgress.current}/{importProgress.total}</span>
+                    </div>
+                    <div className="h-1.5 bg-[var(--border)] rounded-full overflow-hidden">
+                      <div
+                        className="h-full bg-[var(--accent)] rounded-full transition-all duration-300"
+                        style={{ width: `${(importProgress.current / importProgress.total) * 100}%` }}
+                      />
+                    </div>
+                  </div>
+                )}
+
                 <div className="flex gap-2 pt-2">
-                  <Button type="button" variant="secondary" onClick={() => router.back()} className="flex-1">
+                  <Button type="button" variant="secondary" onClick={() => router.back()} className="flex-1" disabled={isLoading}>
                     Cancel
                   </Button>
-                  <Button type="submit" disabled={loading} className="flex-1">
-                    {loading ? 'Creating…' : 'Create board'}
+                  <Button type="submit" disabled={isLoading} className="flex-1">
+                    {loading ? 'Creating…' : importProgress ? 'Importing…' : 'Create board'}
                   </Button>
                 </div>
               </form>
