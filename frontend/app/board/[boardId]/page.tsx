@@ -78,6 +78,7 @@ function BoardPageInner() {
   const setWatch        = useReducer(reducers.setWatch);
   const setWatchBulk    = useReducer(reducers.setWatchBulk);
   const removeMediaItem = useReducer(reducers.removeMediaItem);
+  const updateMediaItemChrono = useReducer(reducers.updateMediaItemChrono);
 
   // Board-scoped data
   const boardItems = useMemo(
@@ -183,6 +184,14 @@ function BoardPageInner() {
       toast.error(err?.message ?? 'Failed to remove item');
     }
   }, [removeMediaItem, boardId]);
+
+  const handleUpdateChrono = useCallback(async (mediaItemId: bigint, newChronoOrder: number) => {
+    try {
+      await updateMediaItemChrono({ boardId, mediaItemId, newChronoOrder });
+    } catch (err: any) {
+      toast.error(err?.message ?? 'Failed to reorder item');
+    }
+  }, [boardId]);
 
   const handleShare = async () => {
     if (!board) return;
@@ -387,6 +396,7 @@ function BoardPageInner() {
             onSetWatch={handleSetWatch}
             onSetWatchBulk={handleSetWatchBulk}
             onRemoveItem={authMode === 'owner' ? handleRemoveItem : undefined}
+            onUpdateChrono={authMode === 'owner' ? handleUpdateChrono : undefined}
             onScaleChange={setCanvasScale}
             fitViewRef={fitViewRef}
             externalStageRef={stageCanvasRef}

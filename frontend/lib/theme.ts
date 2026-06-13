@@ -19,6 +19,7 @@ export const LIGHT_THEME = {
   'menu.muted': '#78756F',
   'menu.hover': '#E0DDD8',
   'danger': '#EF4444',
+  'accent': '#0D9488',
 } as const;
 
 export const DARK_THEME = {
@@ -39,6 +40,7 @@ export const DARK_THEME = {
   'menu.muted': '#9A9A98',
   'menu.hover': '#2A2A2D',
   'danger': '#F87171',
+  'accent': '#2DD4BF',
 } as const;
 
 export type ThemeTokens = typeof LIGHT_THEME | typeof DARK_THEME;

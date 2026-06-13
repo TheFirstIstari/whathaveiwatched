@@ -24,8 +24,14 @@ export interface NodeCardProps {
   theme: ThemeTokens;
   isOwnerOrParticipant: boolean;
   scale: number;
-  onClick: (id: bigint) => void;
+  isSelected: boolean;
+  isDragging: boolean;
+  draggable: boolean;
+  onClick: (id: bigint, e?: Konva.KonvaEventObject<MouseEvent>) => void;
   onRightClick: (id: bigint, pos: { x: number; y: number }) => void;
+  onDragStart: (id: bigint, e: Konva.KonvaEventObject<DragEvent>) => void;
+  onDragMove: (id: bigint, e: Konva.KonvaEventObject<DragEvent>) => void;
+  onDragEnd: (id: bigint, e: Konva.KonvaEventObject<DragEvent>) => void;
   onShowTooltip: (title: string, subtitle: string, pos: { x: number; y: number }) => void;
   onHideTooltip: () => void;
 }
@@ -46,13 +52,13 @@ const TYPE_COLORS: Record<string, string> = {
   ARC:     '#D64687',  // Rose
   EPISODE: '#6B6560',  // Warm gray
 };
-
 export function NodeCard({
   id, mediaType, title, subtitle, posterUrl,
   participants, watchState, x, y, opacity = 1,
   targetX, targetY, targetOpacity,
   theme, isOwnerOrParticipant, scale,
-  onClick, onRightClick, onShowTooltip, onHideTooltip,
+  isSelected, isDragging, draggable,
+  onClick, onRightClick, onDragStart, onDragMove, onDragEnd, onShowTooltip, onHideTooltip,
 }: NodeCardProps) {
   const nodeRef = useRef<Konva.Group>(null);
   const { w, h } = nodeDimensions(mediaType);
@@ -99,7 +105,7 @@ export function NodeCard({
 
   const handleClick = (e: Konva.KonvaEventObject<MouseEvent>) => {
     e.cancelBubble = true;
-    onClick(id);
+    onClick(id, e);
   };
 
   const handleContextMenu = (e: Konva.KonvaEventObject<MouseEvent>) => {
@@ -114,6 +120,7 @@ export function NodeCard({
   const badgeY = 8;
   const isWatched = watchState === 'WATCHED';
   const isPartial = watchState === 'PARTIAL';
+  const selColor = theme['accent'];
 
   return (
     <Group
@@ -125,7 +132,45 @@ export function NodeCard({
       onMouseLeave={handleMouseLeave}
       onClick={handleClick}
       onContextMenu={handleContextMenu}
+      onDragStart={(e) => onDragStart(id, e)}
+      onDragMove={(e) => onDragMove(id, e)}
+      onDragEnd={(e) => onDragEnd(id, e)}
+      draggable={draggable}
     >
+      {/* Selection indicator */}
+      {isSelected && (
+        <Rect
+          width={w + 6}
+          height={h + 6}
+          x={-3}
+          y={-3}
+          fill="transparent"
+          stroke={selColor}
+          strokeWidth={2.5}
+          cornerRadius={cornerR + 2}
+          listening={false}
+          shadowColor={selColor}
+          shadowBlur={8}
+          shadowOpacity={0.4}
+        />
+      )}
+
+      {/* Dragging indicator */}
+      {isDragging && (
+        <Rect
+          width={w + 4}
+          height={h + 4}
+          x={-2}
+          y={-2}
+          fill="transparent"
+          stroke={selColor}
+          strokeWidth={2}
+          dash={[6, 3]}
+          cornerRadius={cornerR + 1}
+          listening={false}
+          opacity={0.7}
+        />
+      )}
       {/* Shadow beneath card */}
       <Rect
         width={w}

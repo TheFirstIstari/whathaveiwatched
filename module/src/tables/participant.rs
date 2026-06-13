@@ -1,6 +1,10 @@
 use spacetimedb::{table, Identity};
 
-#[table(name = participant, public)]
+#[table(
+    name = participant,
+    public,
+    index(name = participant_board, btree(columns = [board_id]))
+)]
 pub struct Participant {
     #[primary_key]
     #[auto_inc]

@@ -158,6 +158,7 @@ export function AddMediaSearch({ boardId, existingTmdbIds, onImport }: Props) {
                         src={`https://image.tmdb.org/t/p/w92${r.posterPath}`}
                         className="w-9 h-[52px] rounded-[var(--radius-sm)] object-cover shrink-0 border border-[var(--border)]"
                         alt=""
+                        loading="lazy"
                       />
                     ) : (
                       <div className="w-9 h-[52px] rounded-[var(--radius-sm)] bg-[var(--surface-2)] shrink-0 flex items-center justify-center text-[var(--text-dim)] text-xs border border-[var(--border)]">

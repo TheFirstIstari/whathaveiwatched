@@ -74,3 +74,24 @@ pub fn regenerate_invite(ctx: &ReducerContext, board_id: u64) -> Result<(), Stri
     ctx.db.board().id().update(board);
     Ok(())
 }
+
+#[reducer]
+pub fn update_media_item_chrono(
+    ctx: &ReducerContext,
+    board_id: u64,
+    media_item_id: u64,
+    new_chrono_order: f64,
+) -> Result<(), String> {
+    assert_board_owner(ctx, board_id).map_err(|e| e.to_string())?;
+    
+    let item = ctx.db.media_item().iter()
+        .find(|m| m.id == media_item_id && m.board_id == board_id)
+        .ok_or("Media item not found")?;
+    
+    let mut updated = item.clone();
+    updated.chrono_order = new_chrono_order;
+    ctx.db.media_item().id().delete(item.id);
+    ctx.db.media_item().insert(updated);
+    
+    Ok(())
+}

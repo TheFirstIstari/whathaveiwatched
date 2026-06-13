@@ -1,6 +1,12 @@
 use spacetimedb::{table, Identity};
 
-#[table(name = media_item, public)]
+#[derive(Clone)]
+#[table(
+    name = media_item,
+    public,
+    index(name = media_item_parent_id, btree(columns = [parent_id])),
+    index(name = media_item_board_id, btree(columns = [board_id]))
+)]
 pub struct MediaItem {
     #[primary_key]
     #[auto_inc]

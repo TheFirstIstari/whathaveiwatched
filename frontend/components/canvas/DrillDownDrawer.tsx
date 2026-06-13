@@ -119,7 +119,7 @@ export function DrillDownDrawer({
         {node?.posterUrl && (
           <div className="relative">
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={node.posterUrl} className="w-full object-cover max-h-40" alt={node.title} />
+            <img src={node.posterUrl} className="w-full object-cover max-h-40" alt={node.title} loading="lazy" />
             <div className="absolute inset-0 bg-gradient-to-t from-[var(--surface-solid)] via-transparent to-transparent" />
           </div>
         )}

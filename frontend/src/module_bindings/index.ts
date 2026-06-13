@@ -47,6 +47,7 @@ import ResetProgressReducer from "./reset_progress_reducer";
 import SetWatchReducer from "./set_watch_reducer";
 import SetWatchBulkReducer from "./set_watch_bulk_reducer";
 import UpdateBoardReducer from "./update_board_reducer";
+import UpdateMediaItemChronoReducer from "./update_media_item_chrono_reducer";
 
 // Import all procedure arg schemas
 
@@ -149,6 +150,7 @@ const reducersSchema = __reducers(
   __reducerSchema("set_watch", SetWatchReducer),
   __reducerSchema("set_watch_bulk", SetWatchBulkReducer),
   __reducerSchema("update_board", UpdateBoardReducer),
+  __reducerSchema("update_media_item_chrono", UpdateMediaItemChronoReducer),
 );
 
 /** The schema information for all procedures in this module. This is defined the same way as the procedures would have been defined in the server. */

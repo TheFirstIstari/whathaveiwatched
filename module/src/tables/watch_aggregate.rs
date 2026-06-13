@@ -1,6 +1,11 @@
 use spacetimedb::{table, Identity};
 
-#[table(name = watch_aggregate, public)]
+#[table(
+    name = watch_aggregate,
+    public,
+    index(name = agg_item_watcher, btree(columns = [media_item_id, watcher_identity])),
+    index(name = agg_board_watcher, btree(columns = [board_id, watcher_identity]))
+)]
 pub struct WatchAggregate {
     #[primary_key]
     #[auto_inc]
